@@ -5,6 +5,6 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "files.exclude": { "**/.DS_Store": true },
-  "search.exclude": { "**/node_modules": true, "**/dist": true, "legacy": true },
+  "search.exclude": { "**/node_modules": true, "**/dist": true, "prototype": true },
   "telemetry.telemetryLevel": "off"
 }

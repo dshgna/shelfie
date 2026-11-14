@@ -4,16 +4,19 @@ A private home inventory. Local-first: your shelves live on your device, with op
 
 ## Decisions
 
-| Area           | Choice                                            | Why                                                     |
-| -------------- | ------------------------------------------------- | ------------------------------------------------------- |
-| UI             | React + TypeScript                                | Matches React Aria Components; widest Capacitor support |
-| Styling        | Tailwind CSS v4, tokens ported from the prototype | One design system for web, iOS and Android              |
-| Components     | React Aria Components (no Ionic)                  | Accessible primitives, our own look                     |
-| Build          | Vite                                              | Fast, simple, first-class PWA plugin                    |
-| Backend        | Supabase (auth, Postgres, edge functions)         | Used as a store for **encrypted records only**          |
-| Encryption key | Passphrase-derived, on the device (Web Crypto)    | Works in every browser; passkey option can come later   |
-| Sync           | In version 1                                      | Decided 13 Nov 2026                                     |
-| Mobile         | Capacitor wrapper around this same code           | Step after the web app                                  |
+| Area            | Choice                                            | Why                                                      |
+| --------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| UI              | React + TypeScript                                | Matches React Aria Components; widest Capacitor support  |
+| Styling         | Tailwind CSS v4, tokens ported from the prototype | One design system for web, iOS and Android               |
+| Components      | React Aria Components (no Ionic)                  | Accessible primitives, our own look                      |
+| Build           | Vite                                              | Fast, simple, first-class PWA plugin                     |
+| Backend         | Supabase (auth, Postgres, edge functions)         | Used as a store for **encrypted records only**           |
+| Encryption key  | Passphrase-derived, on the device (Web Crypto)    | Works in every browser; passkey option can come later    |
+| Sync            | In version 1                                      | Decided 13 Nov 2026                                      |
+| Mobile          | Capacitor wrapper around this same code           | Step after the web app                                   |
+| Hosting         | statichost.eu (Sweden)                            | Decided 14 Nov 2026                                      |
+| Supabase region | To be chosen (Canada Central or an EU region)     | Open decision                                            |
+| Mobile notes    | Capacitor 8, iOS via CocoaPods                    | ML Kit barcode plugin 8.x supports only CocoaPods on iOS |
 
 ## Privacy rules the code must keep
 
@@ -24,15 +27,21 @@ A private home inventory. Local-first: your shelves live on your device, with op
 
 ## Getting started
 
+Needs Node 22 or newer (`.nvmrc`).
+
 ```sh
-npm run setup        # installs the latest stable packages, installs Chromium for tests
-npm run format       # once: matches the starter files to the Prettier settings
+npm ci                            # installs the versions pinned in package-lock.json
+npx playwright install chromium   # browser for the end-to-end tests
 npm run lint && npm run typecheck && npm test
-npm run dev          # http://localhost:5173
-npm run test:e2e     # builds, serves with production headers, runs Playwright
+npm run dev                       # http://localhost:5173
+npm run test:e2e                  # builds, serves with production headers, runs Playwright
 ```
 
-Commit `package.json` and `package-lock.json` after the first `npm run setup` so versions are pinned.
+Versions are pinned in `package.json` and `package-lock.json`. Do not re-run `npm run setup`: it was for the first install only and reinstalls every package at `latest`.
+
+### Getting the prototype
+
+The original prototype is not in the repo. Download the latest prototype HTML from the project owner and save it as `prototype/prototype-live-YYYY-MM-DD.html`, using the download date (for example `prototype/prototype-live-2026-11-14.html`). The folder is gitignored: do not add the file to git.
 
 ## Layout
 
@@ -40,21 +49,23 @@ Commit `package.json` and `package-lock.json` after the first `npm run setup` so
 CLAUDE.md             project memory for Claude Code: decisions, privacy rules, conventions
 .claude/              Claude Code permissions (denies reading .env and key files)
 .vscode/              recommended extensions and editor settings
-docs/                 architecture, data model, threat model, privacy policy (planned)
+docs/                 decision log; architecture, data model, threat model, privacy policy (planned)
 src/                  app code (main.tsx, App.tsx, styles.css)
 supabase/             migrations and edge functions (step 5 onward)
 security-headers.ts   one source of truth for CSP etc. (preview server + dist/_headers)
 e2e/                  Playwright tests (run against the production build)
-legacy/               prototype-v65.html: the snapshot to port from (local only, gitignored)
+prototype/            original single-file prototype, local only and gitignored, used as a porting reference
 scripts/setup.sh      one-time install
 ios/ android/         generated by Capacitor in the mobile phase; committed
 ```
 
-Planned folders (added as each step lands): `src/domain` (step 2), `src/storage` (3), `src/ui` (4), `src/crypto` and `src/sync` (5), `supabase/` functions including the AI proxy (6).
+Planned folders (added as each step lands): `src/domain` (step 2) including `src/domain/swaps` (greener-swap catalogue), `src/storage` (3), `src/ui` (4), `src/crypto` and `src/sync` (5), `supabase/` functions including the AI proxy (6).
 
 ## Roadmap
 
-1. Scaffold (this commit)
+Web (steps 1-9 web app, step 10 web barcode scanning):
+
+1. Scaffold
 2. Extract domain logic into tested modules
 3. Local storage (IndexedDB), export, import from the prototype
 4. Rebuild the UI
@@ -63,3 +74,14 @@ Planned folders (added as each step lands): `src/domain` (step 2), `src/storage`
 7. Offline and installability polish
 8. Account controls (export, delete)
 9. Harden and beta
+10. Web barcode scanning
+
+iOS and Android (steps 11-17):
+
+11. Add Capacitor and the native projects
+12. Native barcode scanning
+13. Notifications and native polish
+14. Secure key storage and app lock
+15. Icons, splash and signing
+16. Device testing and beta tracks
+17. Store listing and submission

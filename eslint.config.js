@@ -9,7 +9,7 @@ export default tseslint.config(
       'dist',
       'dev-dist',
       'coverage',
-      'legacy',
+      'prototype',
       'ios',
       'android',
       'playwright-report',

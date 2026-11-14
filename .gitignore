@@ -21,10 +21,13 @@ android/local.properties
 *.jks
 *.p12
 *.mobileprovision
+# Android signing passwords: never commit
+keystore.properties
+android/keystore.properties
 
 # Supabase local state
 supabase/.branches
 supabase/.temp
 
-# Original prototype: local reference only, never committed (may contain personal data)
-legacy/
+# Original prototype: local porting reference only, never committed (may contain personal data)
+prototype/

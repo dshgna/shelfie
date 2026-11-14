@@ -1,5 +1,7 @@
 # Docs
 
+- `decisions.md` - dated decision log, one line per decision with the reason
+
 Planned documents, added as each step lands:
 
 - `architecture.md` - how storage, encryption, sync and the AI proxy fit together (steps 3, 5, 6)

@@ -38,9 +38,14 @@ describe('security headers', () => {
     expect(policy).toContain('geolocation=()')
   })
 
-  it('renders a _headers file that applies to every path', () => {
+  it('renders a statichost.eu _headers file that applies to every path', () => {
     const file = toHeadersFile()
-    expect(file.startsWith('/*\n')).toBe(true)
+    expect(file.startsWith('*\n')).toBe(true)
     expect(file).toContain('Content-Security-Policy:')
+  })
+
+  it('indents every header four spaces under the path line', () => {
+    const file = toHeadersFile({ 'X-One': 'a', 'X-Two': 'b c' })
+    expect(file).toBe('*\n    X-One: a\n    X-Two: b c\n')
   })
 })

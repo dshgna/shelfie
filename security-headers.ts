@@ -1,7 +1,7 @@
 /**
  * Security headers, defined once.
  *  - `vite preview` serves them, so the end-to-end tests run under the real policy.
- *  - The build writes them to dist/_headers, which Cloudflare Pages and Netlify apply in production.
+ *  - The build writes them to dist/_headers, which statichost.eu applies in production.
  * The dev server does NOT use them (hot reload needs inline scripts).
  *
  * Privacy intent: the app may only talk to its own origin and to Supabase.
@@ -33,8 +33,11 @@ export const securityHeaders: Record<string, string> = {
     'camera=(self), microphone=(), geolocation=(), payment=(), interest-cohort=()',
 }
 
-/** Format for a Cloudflare Pages / Netlify `_headers` file. */
+/**
+ * Format for statichost.eu's `_headers` file (https://www.statichost.eu/docs/custom-headers/):
+ * a path line (`*` = every path on the site), then each header indented four spaces.
+ */
 export function toHeadersFile(headers: Record<string, string> = securityHeaders): string {
-  const lines = Object.entries(headers).map(([k, v]) => `  ${k}: ${v}`)
-  return `/*\n${lines.join('\n')}\n`
+  const lines = Object.entries(headers).map(([k, v]) => `    ${k}: ${v}`)
+  return `*\n${lines.join('\n')}\n`
 }
