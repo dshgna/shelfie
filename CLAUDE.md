@@ -32,6 +32,21 @@ Shelfie is a private, local-first home inventory app (household and personal-car
 8. The swap catalogue (bundled or cached) holds no user data and no affiliate links. Shop links are built from its URL templates, never taken from Claude-generated URLs.
 9. `prototype/` is a read-only porting reference. Claude Code may read it to match behaviour, but must never edit it, copy personal data from it into the repo, or commit it. It must never be imported by app code, tests or build config.
 
+## Design rules
+
+The full design system lives in the owner's claude.ai Project (`shelfie/06-design-system.md`), which you cannot see. The values are mirrored in `design/tokens.json`. Treat that file as the source for colours, fonts and fixed copy. `src/styles.css` must match it: `src/design-tokens.test.ts` fails on any drift (both dark blocks included), on any extra variable, and on any colour literal outside the doc's palette in `styles.css`, `index.html`, `public/favicon.svg` or the PWA manifest. It has no exception list: do not add one to get a test passing. The PNG icons in `public/` are not checked; keep them in step with `favicon.svg`. Do not invent values, and do not edit it unless the owner says the design changed. If something you need is not in it, ask.
+
+Rules that always apply:
+
+- Colour and type: only the palette in `design/tokens.json` and its tints. Fredoka for the wordmark and headings, Figtree for everything else. No other fonts or colours. Use the CSS custom properties (for example `var(--accent)`), never hard-coded hex values in components.
+- The two main actions are named "Fill my shelves" and "Shop now". Import options use the landing page's names with Now or Planned labels, never "Coming soon".
+- Mascot: the jar, with an eucalyptus body, wooden lid and cream label, and no cheeks. Its mood shows the item status.
+- Voice: plain and short ("Your cupboard stays yours").
+- Never show ethical ratings or labels unless a ratings source has been chosen. Do not invent ratings.
+- Dark mode values are the app's own and are in the `dark` section of `design/tokens.json`.
+- Fonts are bundled with the app, never loaded from a third-party CDN (privacy rule).
+- `docs/design/` (create when needed) holds exported PNG/PDF screens from the design canvas, never `prototype/`.
+
 ## Commands
 
 ```sh
@@ -68,8 +83,9 @@ Roadmap steps are in `README.md`. Folders marked (planned) do not exist yet; cre
 - `src/crypto/`, `src/sync/` (planned, step 5) encryption and Supabase sync.
 - `src/ui/` (planned, step 4) React components. `src/styles.css` holds the tokens. `src/App.tsx` is currently a placeholder shell.
 - `supabase/` (planned, steps 5-6) migrations and edge functions (including the AI proxy). `supabase/README.md` describes the intended tables and RLS.
-- `prototype/` holds the original single-file prototype (`prototype-v65.html`, plus dated downloads named `prototype-live-YYYY-MM-DD.html`; use the newest). It is gitignored and exists only on the local machine: never commit it (it may contain personal data). See hard rule 9. It is a frozen snapshot: once a screen is ported, the source of truth for tokens and copy is the design system doc in the owner's claude.ai Project (`shelfie/06-design-system.md`, not in this repo), not the prototype. If you need the current tokens or copy rules and this repo doesn't have them, ask the owner rather than guessing values. `design/tokens.json` (planned, not created yet) will mirror the tokens JSON from the design system doc. Once it exists, `src/styles.css` must match it and a Vitest check enforces that. It is the reference to port from, not code to ship. It is about 365 KB: grep for the function you need (e.g. `calcStock`, `needsRestock`, `migrate`) instead of reading it whole. Its in-app Claude chat calls the AI directly; that must not be ported as is (AI calls go through the edge function only).
-- `docs/` `decisions.md` (dated decision log; add a line when a decision changes), plus planned architecture notes, data model and privacy policy draft (see `docs/README.md`). `docs/design/` (create when needed) holds exported PNG/PDF screens from the design canvas. Never put them in `prototype/`.
+- `prototype/` holds the original single-file prototype (`prototype-v65.html`, plus dated downloads named `prototype-live-YYYY-MM-DD.html`; use the newest). It is gitignored and exists only on the local machine: never commit it (it may contain personal data). See hard rule 9. It is a frozen snapshot and the reference to port behaviour from, not code to ship. It is not the source for tokens or copy: see Design rules. It is about 365 KB: grep for the function you need (e.g. `calcStock`, `needsRestock`, `migrate`) instead of reading it whole. Its in-app Claude chat calls the AI directly; that must not be ported as is (AI calls go through the edge function only).
+- `docs/` `decisions.md` (dated decision log; add a line when a decision changes), plus planned architecture notes, data model and privacy policy draft (see `docs/README.md`). Exported design screens go in `docs/design/` (see Design rules).
+- `design/tokens.json` mirrors the design system's colours, fonts and fixed copy (see Design rules).
 
 ## How the pieces connect
 
@@ -77,7 +93,7 @@ Roadmap steps are in `README.md`. Folders marked (planned) do not exist yet; cre
 - **E2E fails on any foreign request.** `e2e/foundation.spec.ts` records every request not to the app's origin and every console CSP violation. Playwright builds and previews on port 4173 (`strictPort`); locally it reuses an already running server, so restart a stale preview after changes.
 - **`src/domain` is fenced in two ways.** ESLint (`eslint.config.js`, blocks generated per folder depth) bans imports of React, React Aria, `@supabase/*`, `@capacitor*/*` and relative imports that climb out of `src/domain`; bans browser globals including `globalThis` and `self`; and bans `new Date()` with no arguments, `Date.now()` and `Math.random()` (today is a parameter; `new Date(value)` is fine). `src/domain/tsconfig.json` extends the root config with `"lib": ["ES2022"]` and `"types": []`, so browser and Node APIs are unknown names there however they are reached. A new subfolder deeper than three levels below `src/domain` needs another depth in `domainImportBlocks`.
 - **Unit tests** only match `src/**/*.test.ts` in a `node` environment (no DOM, no `.tsx` tests) unless `vite.config.ts` is changed.
-- **Theming.** Tokens are CSS variables in `src/styles.css`, exposed to Tailwind via `@theme inline` (`bg-surface`, `text-muted`, `border-line`, `text-cat-<category>`). Dark values appear twice (system dark and forced `data-theme="dark"`): edit both. Theme is switched by setting or removing `data-theme` on `<html>`. Fonts come from `@fontsource-variable/*` packages, never a CDN.
+- **Theming.** Tokens are CSS variables in `src/styles.css`, exposed to Tailwind via `@theme inline` (`bg-surface`, `text-muted`, `border-line`, `bg-cream`). Dark values appear twice (system dark and forced `data-theme="dark"`): edit both. Theme is switched by setting or removing `data-theme` on `<html>`. Fonts come from `@fontsource-variable/*` packages, never a CDN.
 - **PWA.** `vite-plugin-pwa` in `vite.config.ts` holds the manifest and Workbox precache patterns (`js,css,html,svg,png,woff2`); new asset types must be added there to work offline.
 - **TypeScript/ESLint.** `tsconfig.json` lists included paths explicitly; add new top-level TS files or folders there. `verbatimModuleSyntax` plus the `consistent-type-imports` rule means type-only imports must use `import type`. `noUncheckedIndexedAccess` is on. ESLint and Prettier ignore `prototype/`.
 

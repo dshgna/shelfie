@@ -19,7 +19,11 @@ export type IsoDate = string
  */
 export type Link = string
 
-/** The prototype's 10 categories, in its display order. */
+/**
+ * Shelfie's 9 categories, in the prototype's display order. The prototype also has 'basics'
+ * (Household Basics), which was removed here on purpose: migrations.ts moves those items to
+ * 'household', keeping their group.
+ */
 export const CATEGORIES = [
   'skincare',
   'hair',
@@ -39,6 +43,32 @@ export type Category = (typeof CATEGORIES)[number]
  * Each category has default groups, but people can type their own, so this is any text.
  */
 export type Group = string
+
+/**
+ * Each category's default groups, in display order. Prototype `CATS[cat].subs` (skincare's come
+ * from the routine `STEPS`). The prototype's pickers also offer 'Other' in every category.
+ * 'basics' (Paper Goods, Batteries & Bulbs, Other Basics) is left out with its category.
+ */
+export const DEFAULT_GROUPS: Readonly<Record<Category, readonly Group[]>> = {
+  skincare: [
+    'Step 1 · Oil Cleanser',
+    'Step 2 · Water Cleanser',
+    'Step 3 · Toner',
+    'Step 4 · Essence',
+    'Step 5 · Serum or Ampoule',
+    'Step 6 · Moisturiser',
+    'Step 7 · Sun Protection',
+    'Eye Cream',
+  ],
+  hair: ['Body Soap', 'Shampoo', 'Conditioner', 'Hand Soap'],
+  beauty: ['Body Creams', 'Make-Up', 'Tools & Accessories'],
+  dental: ['Dental Care'],
+  household: ['Floors, Surfaces & Cloths'],
+  kitchen: ['Dishwashing', 'Oven & Surfaces', 'Waste & Paper', 'Hand Soap'],
+  bathroom: ['Cleaning', 'Toilet Paper'],
+  laundry: ['Washing', 'Stain & Fabric Care'],
+  health: ['First Aid', 'Medicines'],
+}
 
 /** The units the prototype offers in its picker. */
 export const KNOWN_UNITS = [
@@ -90,8 +120,12 @@ export type KnownUnit = (typeof KNOWN_UNITS)[number]
  */
 export type Unit = KnownUnit | (string & {})
 
-/** How much of the one in use has been used up when it is time to reorder (0.9 = 10% left). */
-export type ReorderShare = 0.25 | 0.5 | 0.75 | 0.9
+/**
+ * How much of the one in use has been used up when it is time to reorder (0.9 = 10% left).
+ * Any percentage from 1% to 100% with at most 2 decimals: 0.01 to 1, such as 0.25 or 0.33.
+ * The type can't express that range, so `validateItem` in validate.ts reports 'invalid-share'.
+ */
+export type ReorderShare = number
 
 /**
  * When an item needs reordering. It is one of two kinds:

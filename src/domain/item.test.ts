@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 import {
   CATEGORIES,
   CURRENT_SCHEMA_VERSION,
+  DEFAULT_GROUPS,
   KNOWN_UNITS,
   type Category,
   type IsoDate,
@@ -15,7 +16,7 @@ const soap = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   id: 'test-item-1',
   name: 'Lavender Hand Soap',
-  brand: 'Meadow & Co',
+  brand: 'Example & Co',
   category: 'hair',
   group: 'Hand Soap',
   location: 'Bathroom shelf',
@@ -69,17 +70,31 @@ describe('Item type', () => {
   })
 
   it('rejects values the prototype never stores', () => {
-    // @ts-expect-error: 'garden' is not one of the 10 categories
+    // @ts-expect-error: 'garden' is not one of the 9 categories
     expectTypeOf<'garden'>().toExtend<Category>()
     // @ts-expect-error: dates are "YYYY-MM-DD" strings, not Date objects
     expectTypeOf<Date>().toExtend<Item['startedOn']>()
-    // @ts-expect-error: a share reorder only allows 0.25, 0.5, 0.75 or 0.9
-    expectTypeOf<{ kind: 'share'; share: 0.3 }>().toExtend<ReorderRule>()
+    // @ts-expect-error: a share is a number (0.01 to 1, checked by validateItem), not text
+    expectTypeOf<{ kind: 'share'; share: '30%' }>().toExtend<ReorderRule>()
   })
 
-  it('lists the prototype categories and units', () => {
-    expect(CATEGORIES).toHaveLength(10)
+  it('lists the categories and the prototype units', () => {
+    expect(CATEGORIES).toHaveLength(9)
     expect(KNOWN_UNITS).toHaveLength(34)
     expect(new Set(KNOWN_UNITS).size).toBe(KNOWN_UNITS.length)
+  })
+})
+
+describe('DEFAULT_GROUPS (added in the test review)', () => {
+  it('has at least one group for every category, and nothing else', () => {
+    expect(Object.keys(DEFAULT_GROUPS).sort()).toEqual([...CATEGORIES].sort())
+    for (const category of CATEGORIES) expect(DEFAULT_GROUPS[category].length).toBeGreaterThan(0)
+  })
+
+  it('has no group twice in the same category', () => {
+    for (const category of CATEGORIES) {
+      const groups = DEFAULT_GROUPS[category]
+      expect(new Set(groups).size, category).toBe(groups.length)
+    }
   })
 })

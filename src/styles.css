@@ -3,32 +3,32 @@
 @import '@fontsource-variable/figtree';
 @import '@fontsource-variable/fredoka';
 
-/* Design tokens ported from the prototype (Botanical Leaves). Light is the default. */
+/* Design tokens: must match design/tokens.json (enforced by src/design-tokens.test.ts). Light is the default. */
 :root {
   color-scheme: light;
-  --bg: #f2f5f4;
+  --bg: #eef4f1;
   --surface: #ffffff;
-  --surface-2: #e8eeec;
+  --surface-2: #f1f2f2;
+  --line: #dcdedf;
   --ink: #15262a;
   --muted: #566b6f;
-  --line: #d3dddb;
   --accent: #0e6f6b;
-  --accent-ink: #ffffff;
+  --edge: #7a8e91;
+  --eu: #82b5a3;
+  --eu-shade: #4e967d;
+  --yellow: #f2c75c;
+  --sprout: #4f9a62;
+  --cream: #fff7e6;
+  --wood: #cfa57c;
+  --coral: #e0694f;
   --warn: #9a5200;
-  --warn-bg: #fbebd6;
+  --warn-bg: #fff7e6;
   --danger: #b3261e;
-  --danger-bg: #fbe3e0;
-
-  --cat-skincare: #a0467a;
-  --cat-kitchen: #8f7200;
-  --cat-bathroom: #2c79a6;
-  --cat-laundry: #5b5bb0;
-  --cat-household: #0e6f6b;
-  --cat-hair: #8a4fb8;
-  --cat-beauty: #c2475a;
-  --cat-dental: #2f8f5b;
-  --cat-health: #b04a2c;
-  --cat-basics: #6e7f2e;
+  --sprout-deep: #276b43;
+  --eu-20: color-mix(in srgb, #82b5a3 20%, #fff);
+  --wood-45: color-mix(in srgb, #cfa57c 45%, #fff);
+  --chip-bg: #fff7e6;
+  --chip-line: color-mix(in srgb, #cfa57c 45%, #fff);
 }
 
 /* Dark: follows the system unless the user forced light. */
@@ -38,26 +38,22 @@
     --bg: #0f1a1d;
     --surface: #172428;
     --surface-2: #1f2f34;
+    --line: #2b3f44;
     --ink: #e6efee;
     --muted: #93a9ad;
-    --line: #2b3f44;
     --accent: #4fc2bb;
-    --accent-ink: #08201f;
+    --edge: #6f8b90;
+    --eu: #5f9987;
+    --cream: #2b261b;
+    --wood: #a8825c;
+    --sprout: #6fc184;
     --warn: #f0a64f;
-    --warn-bg: #3a2a12;
-    --danger: #ff8a80;
-    --danger-bg: #3c1b19;
-
-    --cat-skincare: #dc83b5;
-    --cat-kitchen: #e3c84a;
-    --cat-bathroom: #6db4de;
-    --cat-laundry: #9c9cf0;
-    --cat-household: #4fc2bb;
-    --cat-hair: #c79bec;
-    --cat-beauty: #f08a9a;
-    --cat-dental: #6fd09a;
-    --cat-health: #f0a080;
-    --cat-basics: #afc468;
+    --warn-bg: #2b261b;
+    --sprout-deep: #8fd6a4;
+    --eu-20: #1f3a34;
+    --wood-45: #4a3d2d;
+    --chip-bg: #2b261b;
+    --chip-line: #5b4a36;
   }
 }
 
@@ -67,29 +63,25 @@
   --bg: #0f1a1d;
   --surface: #172428;
   --surface-2: #1f2f34;
+  --line: #2b3f44;
   --ink: #e6efee;
   --muted: #93a9ad;
-  --line: #2b3f44;
   --accent: #4fc2bb;
-  --accent-ink: #08201f;
+  --edge: #6f8b90;
+  --eu: #5f9987;
+  --cream: #2b261b;
+  --wood: #a8825c;
+  --sprout: #6fc184;
   --warn: #f0a64f;
-  --warn-bg: #3a2a12;
-  --danger: #ff8a80;
-  --danger-bg: #3c1b19;
-
-  --cat-skincare: #dc83b5;
-  --cat-kitchen: #e3c84a;
-  --cat-bathroom: #6db4de;
-  --cat-laundry: #9c9cf0;
-  --cat-household: #4fc2bb;
-  --cat-hair: #c79bec;
-  --cat-beauty: #f08a9a;
-  --cat-dental: #6fd09a;
-  --cat-health: #f0a080;
-  --cat-basics: #afc468;
+  --warn-bg: #2b261b;
+  --sprout-deep: #8fd6a4;
+  --eu-20: #1f3a34;
+  --wood-45: #4a3d2d;
+  --chip-bg: #2b261b;
+  --chip-line: #5b4a36;
 }
 
-/* Expose the tokens as Tailwind utilities: bg-surface, text-muted, border-line, text-cat-skincare... */
+/* Expose the tokens as Tailwind utilities: bg-surface, text-muted, border-line, bg-cream... */
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -98,22 +90,22 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
   --color-warn: var(--warn);
   --color-warn-bg: var(--warn-bg);
   --color-danger: var(--danger);
-  --color-danger-bg: var(--danger-bg);
-
-  --color-cat-skincare: var(--cat-skincare);
-  --color-cat-kitchen: var(--cat-kitchen);
-  --color-cat-bathroom: var(--cat-bathroom);
-  --color-cat-laundry: var(--cat-laundry);
-  --color-cat-household: var(--cat-household);
-  --color-cat-hair: var(--cat-hair);
-  --color-cat-beauty: var(--cat-beauty);
-  --color-cat-dental: var(--cat-dental);
-  --color-cat-health: var(--cat-health);
-  --color-cat-basics: var(--cat-basics);
+  --color-edge: var(--edge);
+  --color-eu: var(--eu);
+  --color-eu-shade: var(--eu-shade);
+  --color-yellow: var(--yellow);
+  --color-sprout: var(--sprout);
+  --color-cream: var(--cream);
+  --color-wood: var(--wood);
+  --color-coral: var(--coral);
+  --color-sprout-deep: var(--sprout-deep);
+  --color-eu-20: var(--eu-20);
+  --color-wood-45: var(--wood-45);
+  --color-chip-bg: var(--chip-bg);
+  --color-chip-line: var(--chip-line);
 
   --font-display: 'Fredoka Variable', 'Avenir Next', 'Segoe UI', sans-serif;
   --font-body: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;

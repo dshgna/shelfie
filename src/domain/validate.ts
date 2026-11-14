@@ -1,6 +1,7 @@
 // Rules an Item must follow that its type can't express.
 // validateItem only reports problems; normalizeItem returns a corrected copy.
 
+import { isValidIsoDate } from './dates'
 import type { Item } from './item'
 
 /** Which part of the item an issue is about. */
@@ -11,8 +12,10 @@ export type IssueCode =
   | 'start-without-life'
   | 'start-when-out-of-stock'
   | 'share-without-life'
+  | 'invalid-share'
   | 'not-whole-number'
   | 'link-scheme'
+  | 'invalid-date'
 
 export interface ValidationIssue {
   field: IssueField
@@ -35,6 +38,15 @@ function isWholeNumber(value: number): boolean {
 
 function hasLife(item: Item): boolean {
   return item.lifeDays !== undefined && item.lifeDays > 0
+}
+
+/**
+ * True for a reorder share from 0.01 (1%) to 1 (100%) with at most 2 decimals, such as 0.33.
+ * Not 0: the prototype stores 0 for "not set". Rounding to hundredths and comparing works because
+ * a 2-decimal number like 0.29 rounds back to the very same floating-point value.
+ */
+export function isValidShare(share: number): boolean {
+  return share >= 0.01 && share <= 1 && Math.round(share * 100) / 100 === share
 }
 
 /** The prototype keeps a start date only while there is a lifetime and something in stock. */
@@ -106,6 +118,21 @@ export function isSafeLink(url: string): LinkCheck {
 export function validateItem(item: Item): ValidationIssue[] {
   const issues: ValidationIssue[] = []
 
+  // Every date field on Item. The date helpers in dates.ts throw on bad dates, so catch them here.
+  const dates: Array<['startedOn' | 'expiresOn', string | undefined]> = [
+    ['startedOn', item.startedOn],
+    ['expiresOn', item.expiresOn],
+  ]
+  for (const [field, date] of dates) {
+    if (date !== undefined && !isValidIsoDate(date)) {
+      issues.push({
+        field,
+        code: 'invalid-date',
+        message: 'This must be a real date written as YYYY-MM-DD, for example 2026-11-14.',
+      })
+    }
+  }
+
   if (item.startedOn !== undefined) {
     if (!hasLife(item)) {
       issues.push({
@@ -128,6 +155,14 @@ export function validateItem(item: Item): ValidationIssue[] {
       field: 'reorder',
       code: 'share-without-life',
       message: 'Reordering by how much is used up needs a lifetime (how many days one lasts).',
+    })
+  }
+
+  if (item.reorder.kind === 'share' && !isValidShare(item.reorder.share)) {
+    issues.push({
+      field: 'reorder',
+      code: 'invalid-share',
+      message: 'Reorder at must be between 1% and 100%, with at most 2 decimals.',
     })
   }
 

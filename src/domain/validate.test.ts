@@ -1,29 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { CURRENT_SCHEMA_VERSION, type Item } from './item'
-import { isSafeLink, normalizeItem, validateItem, type IssueCode } from './validate'
+import type { Item } from './item'
+import { makeItem as baseItem } from './testing/fixtures'
+import { isSafeLink, isValidShare, normalizeItem, validateItem, type IssueCode } from './validate'
 
-// Invented example data, not anyone's real inventory. Valid as it stands.
+// Invented example data. Valid as it stands: one open, with a lifetime and a start date, so the
+// start-date rules have something to check.
 function makeItem(overrides: Partial<Item> = {}): Item {
-  return {
-    schemaVersion: CURRENT_SCHEMA_VERSION,
-    id: 'test-item',
-    name: 'Rosemary Shampoo',
-    brand: 'Hilltop Botanics',
-    category: 'hair',
-    group: 'Shampoo',
-    location: 'Shower caddy',
-    quantity: 1,
-    unit: 'bottle',
-    size: '250 ml',
-    lifeDays: 60,
-    startedOn: '2026-09-01',
-    reorder: { kind: 'count', atOrBelow: 1 },
-    buyUpTo: 2,
-    notes: '',
-    links: {},
-    isExample: false,
-    ...overrides,
-  }
+  return baseItem({ quantity: 1, lifeDays: 60, startedOn: '2026-09-01', ...overrides })
 }
 
 function codes(item: Item): IssueCode[] {
@@ -68,6 +51,26 @@ describe('validateItem', () => {
       expect(codes(item)).toEqual(expected)
     })
 
+    it.each([
+      { share: 0.01, valid: true },
+      { share: 0.25, valid: true },
+      { share: 0.29, valid: true },
+      { share: 0.33, valid: true },
+      { share: 0.9, valid: true },
+      { share: 1, valid: true },
+      { share: 0, valid: false },
+      { share: -0.5, valid: false },
+      { share: 1.01, valid: false },
+      { share: 0.333, valid: false },
+      { share: 0.005, valid: false },
+      { share: Number.NaN, valid: false },
+      { share: Number.POSITIVE_INFINITY, valid: false },
+    ])('a share of $share is valid: $valid', ({ share, valid }) => {
+      const item = makeItem({ reorder: { kind: 'share', share } })
+      expect(isValidShare(share)).toBe(valid)
+      expect(codes(item)).toEqual(valid ? [] : ['invalid-share'])
+    })
+
     it('does not need a lifetime when reordering by count', () => {
       expect(codes(makeItem({ lifeDays: undefined, startedOn: undefined }))).toEqual([])
     })
@@ -93,6 +96,29 @@ describe('validateItem', () => {
       )
       const expected = [{ field, code: 'not-whole-number', message: expect.any(String) }]
       expect(wholeNumberIssues).toEqual(valid ? [] : expected)
+    })
+  })
+
+  describe('dates', () => {
+    const fields = ['startedOn', 'expiresOn'] as const
+    const values = [
+      { case: 'a valid date', value: '2026-09-01', valid: true },
+      { case: 'the field absent', value: undefined, valid: true },
+      { case: 'an impossible date', value: '2026-02-30', valid: false },
+      { case: 'the wrong shape', value: '2026-9-1', valid: false },
+      { case: 'a different format', value: '01/09/2026', valid: false },
+      { case: 'an empty string', value: '', valid: false },
+    ]
+    const cases = fields.flatMap((field) => values.map((v) => ({ field, ...v })))
+
+    it.each(cases)('$field with $case is valid: $valid', ({ field, value, valid }) => {
+      const overrides: Partial<Item> = {}
+      overrides[field] = value
+      const dateIssues = validateItem(makeItem(overrides)).filter(
+        (issue) => issue.code === 'invalid-date',
+      )
+      const expected = [{ field, code: 'invalid-date', message: expect.any(String) }]
+      expect(dateIssues).toEqual(valid ? [] : expected)
     })
   })
 
@@ -176,4 +202,15 @@ describe('normalizeItem', () => {
     expect(result.links).not.toBe(input.links)
     expect(result.reorder).not.toBe(input.reorder)
   })
+})
+
+describe('boundaries added in the test review', () => {
+  it.each(['quantity', 'buyUpTo', 'lifeDays'] as const)(
+    '%s = Infinity is not a whole number',
+    (field) => {
+      const overrides: Partial<Item> = { startedOn: undefined }
+      overrides[field] = Number.POSITIVE_INFINITY
+      expect(codes(makeItem(overrides))).toEqual(['not-whole-number'])
+    },
+  )
 })
