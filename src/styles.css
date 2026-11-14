@@ -1,0 +1,146 @@
+@import "tailwindcss";
+/* Fonts are bundled from npm and served from our own origin: no request to Google Fonts. */
+@import "@fontsource-variable/figtree";
+@import "@fontsource-variable/fredoka";
+
+/* Design tokens ported from the prototype (Botanical Leaves). Light is the default. */
+:root {
+  color-scheme: light;
+  --bg: #f2f5f4;
+  --surface: #ffffff;
+  --surface-2: #e8eeec;
+  --ink: #15262a;
+  --muted: #566b6f;
+  --line: #d3dddb;
+  --accent: #0e6f6b;
+  --accent-ink: #ffffff;
+  --warn: #9a5200;
+  --warn-bg: #fbebd6;
+  --danger: #b3261e;
+  --danger-bg: #fbe3e0;
+
+  --cat-skincare: #a0467a;
+  --cat-kitchen: #8f7200;
+  --cat-bathroom: #2c79a6;
+  --cat-laundry: #5b5bb0;
+  --cat-household: #0e6f6b;
+  --cat-hair: #8a4fb8;
+  --cat-beauty: #c2475a;
+  --cat-dental: #2f8f5b;
+  --cat-health: #b04a2c;
+  --cat-basics: #6e7f2e;
+}
+
+/* Dark: follows the system unless the user forced light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1a1d;
+    --surface: #172428;
+    --surface-2: #1f2f34;
+    --ink: #e6efee;
+    --muted: #93a9ad;
+    --line: #2b3f44;
+    --accent: #4fc2bb;
+    --accent-ink: #08201f;
+    --warn: #f0a64f;
+    --warn-bg: #3a2a12;
+    --danger: #ff8a80;
+    --danger-bg: #3c1b19;
+
+    --cat-skincare: #dc83b5;
+    --cat-kitchen: #e3c84a;
+    --cat-bathroom: #6db4de;
+    --cat-laundry: #9c9cf0;
+    --cat-household: #4fc2bb;
+    --cat-hair: #c79bec;
+    --cat-beauty: #f08a9a;
+    --cat-dental: #6fd09a;
+    --cat-health: #f0a080;
+    --cat-basics: #afc468;
+  }
+}
+
+/* Dark: forced by the user. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1a1d;
+  --surface: #172428;
+  --surface-2: #1f2f34;
+  --ink: #e6efee;
+  --muted: #93a9ad;
+  --line: #2b3f44;
+  --accent: #4fc2bb;
+  --accent-ink: #08201f;
+  --warn: #f0a64f;
+  --warn-bg: #3a2a12;
+  --danger: #ff8a80;
+  --danger-bg: #3c1b19;
+
+  --cat-skincare: #dc83b5;
+  --cat-kitchen: #e3c84a;
+  --cat-bathroom: #6db4de;
+  --cat-laundry: #9c9cf0;
+  --cat-household: #4fc2bb;
+  --cat-hair: #c79bec;
+  --cat-beauty: #f08a9a;
+  --cat-dental: #6fd09a;
+  --cat-health: #f0a080;
+  --cat-basics: #afc468;
+}
+
+/* Expose the tokens as Tailwind utilities: bg-surface, text-muted, border-line, text-cat-skincare... */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+
+  --color-cat-skincare: var(--cat-skincare);
+  --color-cat-kitchen: var(--cat-kitchen);
+  --color-cat-bathroom: var(--cat-bathroom);
+  --color-cat-laundry: var(--cat-laundry);
+  --color-cat-household: var(--cat-household);
+  --color-cat-hair: var(--cat-hair);
+  --color-cat-beauty: var(--cat-beauty);
+  --color-cat-dental: var(--cat-dental);
+  --color-cat-health: var(--cat-health);
+  --color-cat-basics: var(--cat-basics);
+
+  --font-display: "Fredoka Variable", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Figtree Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

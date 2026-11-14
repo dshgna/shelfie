@@ -1,0 +1,30 @@
+node_modules
+dist
+dev-dist
+coverage
+playwright-report
+test-results
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Capacitor / native build output. The ios/ and android/ projects themselves ARE committed.
+ios/App/Pods
+ios/App/build
+ios/DerivedData
+android/.gradle
+android/build
+android/app/build
+android/local.properties
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+
+# Supabase local state
+supabase/.branches
+supabase/.temp
+
+# Original prototype: local reference only, never committed (may contain personal data)
+legacy/
