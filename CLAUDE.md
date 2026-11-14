@@ -38,7 +38,7 @@ Shelfie is a private, local-first home inventory app (household and personal-car
 npm ci               # fresh checkout: installs the versions pinned in package-lock.json
 npx playwright install chromium   # browser for the e2e tests
 npm run dev          # local dev server
-npm run typecheck
+npm run typecheck    # root tsc, then src/domain again without DOM/Node types
 npm run lint
 npm run format       # Prettier (format:check in CI)
 npm test             # Vitest unit tests
@@ -62,7 +62,7 @@ Versions are now resolved in `package.json` and `package-lock.json`. Use `npm ci
 
 Roadmap steps are in `README.md`. Folders marked (planned) do not exist yet; create them in the step shown.
 
-- `src/domain/` (planned, step 2) pure TypeScript: item model, stock estimation, shelves, routine, import classification. No React, no storage, no network. Fully unit tested.
+- `src/domain/` (step 2, structure and guard rails in place; `smoke.ts` is a placeholder to delete once the first real module is ported) pure TypeScript: item model, stock estimation, shelves, routine, import classification. No React, no storage, no network. Fully unit tested, with `x.test.ts` beside each `x.ts`. Rules are in `src/domain/README.md`.
 - `src/domain/swaps/` (planned) greener-swap catalogue, lookup and reply validation. Pure TypeScript like the rest of `src/domain/`.
 - `src/storage/` (planned, step 3) IndexedDB behind a repository interface. The `swapCache` table lives here too (excluded from export and sync).
 - `src/crypto/`, `src/sync/` (planned, step 5) encryption and Supabase sync.
@@ -75,6 +75,7 @@ Roadmap steps are in `README.md`. Folders marked (planned) do not exist yet; cre
 
 - **Security headers are one source of truth.** `security-headers.ts` feeds `vite preview` (via `vite.config.ts`) and a build plugin that writes `dist/_headers` for statichost.eu (a `*` path line, headers indented four spaces). The dev server does not apply them, so CSP problems only show up in `npm run preview` and the e2e tests. The CSP is strict (`script-src 'self'`; `style-src 'self'` plus one pinned hash for React Aria's injected `#react-aria-pressable-style`): no inline `<script>`/`<style>` in `index.html` and no `style="..."` in static HTML. A React Aria upgrade that changes that style fails the e2e CSP test with the new hash; update the hash in `security-headers.ts` and its pinned test. `Permissions-Policy` allows the camera only (for barcode scanning). Allowing a new origin means changing `security-headers.ts` and `src/security-headers.test.ts` (which pins the exact `connect-src` and `style-src` lists), and asking first (privacy rule 1).
 - **E2E fails on any foreign request.** `e2e/foundation.spec.ts` records every request not to the app's origin and every console CSP violation. Playwright builds and previews on port 4173 (`strictPort`); locally it reuses an already running server, so restart a stale preview after changes.
+- **`src/domain` is fenced in two ways.** ESLint (`eslint.config.js`, blocks generated per folder depth) bans imports of React, React Aria, `@supabase/*`, `@capacitor*/*` and relative imports that climb out of `src/domain`; bans browser globals including `globalThis` and `self`; and bans `new Date()` with no arguments, `Date.now()` and `Math.random()` (today is a parameter; `new Date(value)` is fine). `src/domain/tsconfig.json` extends the root config with `"lib": ["ES2022"]` and `"types": []`, so browser and Node APIs are unknown names there however they are reached. A new subfolder deeper than three levels below `src/domain` needs another depth in `domainImportBlocks`.
 - **Unit tests** only match `src/**/*.test.ts` in a `node` environment (no DOM, no `.tsx` tests) unless `vite.config.ts` is changed.
 - **Theming.** Tokens are CSS variables in `src/styles.css`, exposed to Tailwind via `@theme inline` (`bg-surface`, `text-muted`, `border-line`, `text-cat-<category>`). Dark values appear twice (system dark and forced `data-theme="dark"`): edit both. Theme is switched by setting or removing `data-theme` on `<html>`. Fonts come from `@fontsource-variable/*` packages, never a CDN.
 - **PWA.** `vite-plugin-pwa` in `vite.config.ts` holds the manifest and Workbox precache patterns (`js,css,html,svg,png,woff2`); new asset types must be added there to work offline.
