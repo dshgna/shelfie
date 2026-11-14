@@ -11,7 +11,10 @@ export const securityHeaders: Record<string, string> = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self'",
-    "style-src 'self'",
+    // The hash allows exactly one inline <style>: React Aria's usePress injects
+    // #react-aria-pressable-style (touch-action for tap responsiveness and a Safari fix).
+    // If a React Aria upgrade changes that text, the e2e CSP test fails and prints the new hash.
+    "style-src 'self' 'sha256-38RhXrc7EdReTKsOm23ZPOCUgniTUUcjky8QOOrQx6o='",
     "img-src 'self' data: blob:",
     "font-src 'self'",
     // Supabase (auth + encrypted sync). Narrow to your project URL once it exists.
@@ -26,7 +29,8 @@ export const securityHeaders: Record<string, string> = {
   ].join('; '),
   'Referrer-Policy': 'no-referrer',
   'X-Content-Type-Options': 'nosniff',
-  'Permissions-Policy': 'camera=(self), microphone=(), geolocation=(), payment=(), interest-cohort=()',
+  'Permissions-Policy':
+    'camera=(self), microphone=(), geolocation=(), payment=(), interest-cohort=()',
 }
 
 /** Format for a Cloudflare Pages / Netlify `_headers` file. */

@@ -10,6 +10,12 @@ describe('security headers', () => {
     expect(allowed).toEqual(["'self'", 'https://*.supabase.co', 'wss://*.supabase.co'])
   })
 
+  it('allows styles from our origin plus only the React Aria pressable style hash', () => {
+    const style = csp.split('; ').find((d) => d.startsWith('style-src')) ?? ''
+    const allowed = style.replace('style-src ', '').split(' ')
+    expect(allowed).toEqual(["'self'", "'sha256-38RhXrc7EdReTKsOm23ZPOCUgniTUUcjky8QOOrQx6o='"])
+  })
+
   it('has no third-party sources for scripts, styles, fonts or images', () => {
     for (const name of ['script-src', 'style-src', 'font-src', 'img-src']) {
       const directive = csp.split('; ').find((d) => d.startsWith(name)) ?? ''

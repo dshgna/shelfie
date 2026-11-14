@@ -4,16 +4,16 @@ A private home inventory. Local-first: your shelves live on your device, with op
 
 ## Decisions
 
-| Area | Choice | Why |
-|---|---|---|
-| UI | React + TypeScript | Matches React Aria Components; widest Capacitor support |
-| Styling | Tailwind CSS v4, tokens ported from the prototype | One design system for web, iOS and Android |
-| Components | React Aria Components (no Ionic) | Accessible primitives, our own look |
-| Build | Vite | Fast, simple, first-class PWA plugin |
-| Backend | Supabase (auth, Postgres, edge functions) | Used as a store for **encrypted records only** |
-| Encryption key | Passphrase-derived, on the device (Web Crypto) | Works in every browser; passkey option can come later |
-| Sync | In version 1 | Decided 13 Nov 2026 |
-| Mobile | Capacitor wrapper around this same code | Step after the web app |
+| Area           | Choice                                            | Why                                                     |
+| -------------- | ------------------------------------------------- | ------------------------------------------------------- |
+| UI             | React + TypeScript                                | Matches React Aria Components; widest Capacitor support |
+| Styling        | Tailwind CSS v4, tokens ported from the prototype | One design system for web, iOS and Android              |
+| Components     | React Aria Components (no Ionic)                  | Accessible primitives, our own look                     |
+| Build          | Vite                                              | Fast, simple, first-class PWA plugin                    |
+| Backend        | Supabase (auth, Postgres, edge functions)         | Used as a store for **encrypted records only**          |
+| Encryption key | Passphrase-derived, on the device (Web Crypto)    | Works in every browser; passkey option can come later   |
+| Sync           | In version 1                                      | Decided 13 Nov 2026                                     |
+| Mobile         | Capacitor wrapper around this same code           | Step after the web app                                  |
 
 ## Privacy rules the code must keep
 
