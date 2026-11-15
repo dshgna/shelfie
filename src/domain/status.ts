@@ -94,6 +94,39 @@ export function timing(item: Item, today: IsoDate): Timing | undefined {
 }
 
 /**
+ * How many the item aims to have after shopping: the larger of `buyUpTo` and one more than the
+ * stored count rule's `atOrBelow` (a share rule counts as 0). Prototype `target`:
+ * max(par, min + 1). Never below 1.
+ */
+export function stockTarget(item: Item): number {
+  const atOrBelow = item.reorder.kind === 'count' ? item.reorder.atOrBelow : 0
+  return Math.max(item.buyUpTo, atOrBelow + 1)
+}
+
+/**
+ * How full the item looks on its stock bar, from 0 (none) to 1 (full). Prototype itemHtml's
+ * `frac`:
+ * - when timing() can be worked out (a lifetime, a start date and at least one in stock), the
+ *   share of the one in use that is left: 1 - used, never below 0;
+ * - otherwise quantity over stockTarget(), never above 1.
+ * It only drives the bar: whether to restock is still needsRestock's call.
+ */
+export function stockLeft(item: Item, today: IsoDate): number {
+  const t = timing(item, today)
+  if (t !== undefined) return Math.min(1, Math.max(0, 1 - t.used))
+  return Math.min(1, Math.max(0, item.quantity / stockTarget(item)))
+}
+
+/**
+ * How many to buy to get back to stockTarget(), and always at least 1, since an item is only on
+ * the shopping list when needsRestock says it needs buying. Prototype `buyFor` (before the person
+ * types their own number).
+ */
+export function buyCount(item: Item): number {
+  return Math.max(1, stockTarget(item) - item.quantity)
+}
+
+/**
  * True when the one in use is due for replacement by time: share mode, its reorder date has
  * arrived, and it is the last one (quantity 1). Oddity kept: with 2 or more in stock this is
  * never true, however old the open one is. Prototype `dueByTime`.

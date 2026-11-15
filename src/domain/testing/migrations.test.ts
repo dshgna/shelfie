@@ -67,7 +67,7 @@ function currentItem(overrides: Partial<Item> = {}): Item {
     reorder: { kind: 'share', share: 0.9 },
     buyUpTo: 2,
     notes: '',
-    links: { product: 'https://shop.example/rosemary' },
+    link: 'https://shop.example/rosemary',
     isExample: false,
     householdId: 'test-household',
     deleted: false,
@@ -495,7 +495,7 @@ const stepCases: StepCase[] = [
       buyUpTo: 2,
       expiresOn: '2027-06-01',
       notes: 'Sulphate free',
-      links: { product: 'https://shop.example/cedar', brand: 'https://shop.example/examplehill' },
+      link: 'https://shop.example/cedar',
       isExample: false,
       householdId: 'test-household',
       deleted: false,
@@ -533,7 +533,6 @@ const stepCases: StepCase[] = [
       reorder: { kind: 'count', atOrBelow: 1 },
       buyUpTo: 2,
       notes: '',
-      links: {},
       isExample: false,
       householdId: 'test-household',
       deleted: false,
@@ -565,13 +564,19 @@ const stepCases: StepCase[] = [
     expected: expect.objectContaining({ reorder: { kind: 'share', share: 0.5 }, lifeDays: 50 }),
   },
   {
+    name: 'one link: the brand link is kept when there is no product link',
+    from: 'prototype-v6',
+    input: v6Item({ link: '' }),
+    expected: expect.objectContaining({ link: 'https://shop.example/examplehill' }),
+  },
+  {
     name: 'the legacy full field is dropped, brand link and all',
     from: 'prototype-v6',
     input: v6Item({
       blink: '',
       full: 'Cedar Shampoo [Examplehill](https://shop.example/examplehill)',
     }),
-    expected: expect.objectContaining({ links: { product: 'https://shop.example/cedar' } }),
+    expected: expect.objectContaining({ link: 'https://shop.example/cedar' }),
   },
 ]
 
@@ -738,7 +743,6 @@ describe('migrateToCurrent', () => {
             reorder: { kind: 'count', atOrBelow: 0 },
             buyUpTo: 1,
             notes: '',
-            links: {},
             isExample: false,
             householdId: 'test-household',
             deleted: false,
@@ -765,7 +769,6 @@ describe('migrateToCurrent', () => {
             reorder: { kind: 'share', share: 0.9 },
             buyUpTo: 2,
             notes: '',
-            links: {},
             isExample: false,
             householdId: 'test-household',
             deleted: false,
@@ -810,9 +813,9 @@ describe('migrateToCurrent', () => {
     // Not a bottle, tube or bar: nothing to time, so no lifetime or start; the count rule stays.
     expect(byId.get('brush')).toMatchObject({
       size: '',
-      links: {},
       reorder: { kind: 'count', atOrBelow: 1 },
     })
+    expect(byId.get('brush')).not.toHaveProperty('link')
     expect(byId.get('brush')).not.toHaveProperty('lifeDays')
     expect(byId.get('brush')).not.toHaveProperty('startedOn')
 
@@ -822,8 +825,8 @@ describe('migrateToCurrent', () => {
       lifeDays: 30,
       startedOn: TODAY,
       reorder: { kind: 'share', share: 0.9 },
-      links: {},
     })
+    expect(byId.get('tube')).not.toHaveProperty('link')
 
     // A bottle with none in stock: a lifetime but no start date.
     expect(byId.get('empty-bottle')).toMatchObject({
@@ -840,7 +843,7 @@ describe('migrateToCurrent', () => {
     const result = migrateToCurrent([item], context)
     expect(result).toStrictEqual({ items: [{ item, issues: [], from: 'schema-1' }], removed: [] })
     expect(result.items[0]?.item).not.toBe(item)
-    expect(result.items[0]?.item.links).not.toBe(item.links)
+    expect(result.items[0]?.item.reorder).not.toBe(item.reorder)
   })
 
   it('migrates a collection that mixes versions, each item from its own', () => {
@@ -894,7 +897,7 @@ describe('migrateToCurrent', () => {
     // And changing the result can't reach the input either.
     const first = result.items[0]
     if (!first) throw new Error('expected an item')
-    first.item.links.product = 'https://changed.example/'
+    first.item.reorder = { kind: 'count', atOrBelow: 9 }
     expect(stored).toStrictEqual(before)
   })
 
@@ -931,7 +934,7 @@ describe('migrateToCurrent', () => {
     expect(result.items).toHaveLength(1)
     expect(result.items[0]?.issues.map((issue) => [issue.field, issue.code])).toEqual([
       ['expiresOn', 'invalid-date'],
-      ['links.product', 'link-scheme'],
+      ['link', 'link-scheme'],
     ])
   })
 
@@ -999,7 +1002,7 @@ describe('migrateToCurrent', () => {
       ['a quantity written as text', [v6Item({ qty: 'two' })], 'bad-field'],
       ['an unknown category', [v6Item({ cat: 'garden' })], 'bad-field'],
       ['a share written as text', [v6Item({ pct: '50%' })], 'bad-field'],
-      ['a current item missing its links', [{ ...currentItem(), links: undefined }], 'bad-field'],
+      ['a current item whose link is a number', [{ ...currentItem(), link: 42 }], 'bad-field'],
       [
         'a current item missing householdId',
         [{ ...currentItem(), householdId: undefined }],

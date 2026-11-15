@@ -5,10 +5,11 @@ import { isValidIsoDate } from './dates'
 import type { Item } from './item'
 
 /** Which part of the item an issue is about. */
-export type IssueField = keyof Item | 'links.product' | 'links.brand'
+export type IssueField = keyof Item
 
 /** A stable code for each rule, so the UI and tests don't depend on the message wording. */
 export type IssueCode =
+  | 'missing-name'
   | 'start-without-life'
   | 'start-when-out-of-stock'
   | 'share-without-life'
@@ -121,6 +122,11 @@ export function isSafeLink(url: string): LinkCheck {
 export function validateItem(item: Omit<Item, 'updatedAt'>): ValidationIssue[] {
   const issues: ValidationIssue[] = []
 
+  // The prototype refused to save an item without a name ("Enter a name for the item.").
+  if (item.name.trim() === '') {
+    issues.push({ field: 'name', code: 'missing-name', message: 'Enter a name for the item.' })
+  }
+
   // Every calendar-date field on Item (updatedAt is set by the repository, so it isn't checked
   // here). The date helpers in dates.ts throw on bad dates, so catch them here.
   const dates: Array<['startedOn' | 'expiresOn', string | undefined]> = [
@@ -185,18 +191,12 @@ export function validateItem(item: Omit<Item, 'updatedAt'>): ValidationIssue[] {
     }
   }
 
-  const links: Array<['links.product' | 'links.brand', string | undefined]> = [
-    ['links.product', item.links.product],
-    ['links.brand', item.links.brand],
-  ]
-  for (const [field, link] of links) {
-    if (link !== undefined && !isSafeLink(link).ok) {
-      issues.push({
-        field,
-        code: 'link-scheme',
-        message: 'Links must be web addresses starting with http:// or https://.',
-      })
-    }
+  if (item.link !== undefined && !isSafeLink(item.link).ok) {
+    issues.push({
+      field: 'link',
+      code: 'link-scheme',
+      message: 'Links must be web addresses starting with http:// or https://.',
+    })
   }
 
   return issues
@@ -210,7 +210,7 @@ export function validateItem(item: Omit<Item, 'updatedAt'>): ValidationIssue[] {
  */
 export function normalizeItem<T extends Omit<Item, 'updatedAt'>>(item: T): T {
   // Copy the nested objects too, so changing the result can never reach the original.
-  const copy: T = { ...item, reorder: { ...item.reorder }, links: { ...item.links } }
+  const copy: T = { ...item, reorder: { ...item.reorder } }
   if (shouldClearStart(item)) delete copy.startedOn
   return copy
 }

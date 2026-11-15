@@ -3,6 +3,7 @@ import { isValidIsoDateTime, type IsoDateTime } from '../dates'
 import { CURRENT_SCHEMA_VERSION } from '../item'
 import {
   defaultUserPrefs,
+  mergeUserPrefs,
   newUser,
   type KdfParams,
   type Theme,
@@ -123,5 +124,37 @@ describe('newUser', () => {
 
   it('throws for an Invalid Date', () => {
     expect(() => newUser({ id: 'u', householdId: 'h', now: new Date('nope') })).toThrow(RangeError)
+  })
+})
+
+describe('mergeUserPrefs', () => {
+  it.each([
+    { case: 'undefined', saved: undefined },
+    { case: 'null', saved: null },
+    { case: 'a string', saved: 'dark' },
+    { case: 'an array', saved: ['dark'] },
+    { case: 'an empty object', saved: {} },
+    { case: 'a missing theme', saved: { other: 'dark' } },
+    { case: 'a theme of the wrong type', saved: { theme: 1 } },
+    { case: "a theme that doesn't exist", saved: { theme: 'sepia' } },
+  ])('gives the defaults for $case', ({ saved }) => {
+    expect(mergeUserPrefs(saved)).toEqual({ theme: 'system' })
+  })
+
+  it.each(['system', 'light', 'dark'] as const)('keeps the valid theme %s', (theme) => {
+    expect(mergeUserPrefs({ theme })).toEqual({ theme })
+  })
+
+  it('drops unknown keys', () => {
+    expect(mergeUserPrefs({ theme: 'dark', fontSize: 'large' })).toEqual({ theme: 'dark' })
+  })
+
+  it('gives a new object each call, never the one passed in', () => {
+    const saved = { theme: 'dark' }
+    const merged = mergeUserPrefs(saved)
+    expect(merged).not.toBe(saved)
+    expect(mergeUserPrefs(undefined)).not.toBe(mergeUserPrefs(undefined))
+    merged.theme = 'light'
+    expect(saved.theme).toBe('dark')
   })
 })

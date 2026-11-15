@@ -13,7 +13,7 @@
 // - An item with no `v` and no `schemaVersion` is prototype v1, as in the prototype
 //   (its `it.v >= 2` is false for a missing v).
 // - schemaVersion 1 is Shelfie's first shape: the prototype's v6 with fields renamed
-//   (cat → category, qty → quantity, min + pct → reorder, link/blink → links, and so on).
+//   (cat → category, qty → quantity, min + pct → reorder, link or else blink → link, and so on).
 // - The version is per item, not per collection, as in the prototype: one collection can mix
 //   versions, and each item climbs the ladder from its own rung.
 //
@@ -31,7 +31,6 @@ import {
   type Category,
   type IsoDate,
   type Item,
-  type ItemLinks,
   type ReorderRule,
   type ReorderShare,
 } from './item'
@@ -436,13 +435,9 @@ function roundShare(share: number): ReorderShare {
   return Math.round(share * 100) / 100
 }
 
-function linksFrom(item: Fields): ItemLinks {
-  const links: ItemLinks = {}
-  const product = nonEmptyText(item, 'link')
-  const brand = nonEmptyText(item, 'blink')
-  if (product !== undefined) links.product = product
-  if (brand !== undefined) links.brand = brand
-  return links
+/** Shelfie keeps one link: the prototype's product link (`link`), or else its brand link (`blink`). */
+function linkFrom(item: Fields): string | undefined {
+  return nonEmptyText(item, 'link') ?? nonEmptyText(item, 'blink')
 }
 
 /**
@@ -476,10 +471,11 @@ function prototypeToSchema1(input: unknown, context: MigrationContext): unknown 
     reorder: reorderFrom(requiredNumber(item, 'min'), lifeDays, item.pct),
     buyUpTo: requiredNumber(item, 'par'),
     notes: optionalText(item, 'note', ''),
-    links: linksFrom(item),
     isExample: optionalBoolean(item, 'example', false),
     deleted: false,
   }
+  const link = linkFrom(item)
+  if (link !== undefined) next.link = link
   const startedOn = nonEmptyText(item, 'start')
   const expiresOn = nonEmptyText(item, 'expiry')
   if (lifeDays !== undefined) next.lifeDays = lifeDays
@@ -623,16 +619,6 @@ function readReorder(value: unknown): ReorderRule {
   throw badField('reorder', 'a count rule or a share rule')
 }
 
-function readLinks(value: unknown): ItemLinks {
-  const fields = asFieldsOr(value, 'links')
-  const links: ItemLinks = {}
-  const product = optionalText(fields, 'product', '')
-  const brand = optionalText(fields, 'brand', '')
-  if (product !== '') links.product = product
-  if (brand !== '') links.brand = brand
-  return links
-}
-
 function asFieldsOr(value: unknown, field: string): Fields {
   if (!isFields(value)) throw badField(field, 'an object')
   return value
@@ -685,7 +671,6 @@ function readCurrentItem(input: unknown): Item {
     reorder: readReorder(item.reorder),
     buyUpTo: requiredNumber(item, 'buyUpTo'),
     notes: requiredText(item, 'notes'),
-    links: readLinks(item.links),
     isExample,
     deleted,
     updatedAt,
@@ -693,6 +678,8 @@ function readCurrentItem(input: unknown): Item {
   const lifeDays = item.lifeDays === undefined ? undefined : requiredNumber(item, 'lifeDays')
   const startedOn = optionalDate(item, 'startedOn')
   const expiresOn = optionalDate(item, 'expiresOn')
+  const link = optionalText(item, 'link', '')
+  if (link !== '') result.link = link
   if (lifeDays !== undefined) result.lifeDays = lifeDays
   if (startedOn !== undefined) result.startedOn = startedOn
   if (expiresOn !== undefined) result.expiresOn = expiresOn

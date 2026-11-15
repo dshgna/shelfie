@@ -18,7 +18,6 @@ import {
   type Group,
   type IsoDate,
   type Item,
-  type ItemLinks,
   type KnownUnit,
   type Unit,
 } from './item'
@@ -115,12 +114,15 @@ export interface ImportDraft {
   alternatives: Shelf[]
   confidence: Confidence
   mark: Mark
-  /** Not in the prototype's import, which never had links. Only links isSafeLink accepts. */
-  links: ItemLinks
+  /**
+   * Not in the prototype's import, which never had links. The row's `link`, or else its `blink`
+   * (brand page), and only one that isSafeLink accepts. Left out when there is none.
+   */
+  link?: string
 }
 
 /** Which part of the draft an issue is about. */
-export type DraftField = keyof ImportDraft | 'links.product' | 'links.brand'
+export type DraftField = keyof ImportDraft
 
 /** Why a field was flagged. Two codes are shared with validateItem. */
 export type ImportIssueCode =
@@ -429,16 +431,12 @@ function readAlternatives(value: unknown, own: Shelf, issues: Issues): Shelf[] {
 }
 
 /** One link: kept if isSafeLink accepts it (http:// included, as in validateItem), else dropped. */
-function readLink(
-  value: unknown,
-  field: 'links.product' | 'links.brand',
-  issues: Issues,
-): string | undefined {
+function readLink(value: unknown, issues: Issues): string | undefined {
   if (isMissing(value)) return undefined
   if (isString(value) && isSafeLink(value).ok) return value
   addIssue(
     issues,
-    field,
+    'link',
     'link-scheme',
     'Links must be web addresses starting with http:// or https://, so this one was left out.',
   )
@@ -526,11 +524,7 @@ export function normRow(raw: unknown, today: IsoDate): NormRowResult {
     )
   }
 
-  const links: ItemLinks = {}
-  const product = readLink(raw['link'], 'links.product', issues)
-  if (product !== undefined) links.product = product
-  const brandLink = readLink(raw['blink'], 'links.brand', issues)
-  if (brandLink !== undefined) links.brand = brandLink
+  const link = readLink(raw['link'], issues) ?? readLink(raw['blink'], issues)
 
   const draft: ImportDraft = {
     name,
@@ -546,8 +540,8 @@ export function normRow(raw: unknown, today: IsoDate): NormRowResult {
     alternatives: readAlternatives(raw['alts'], { category, group }, issues),
     confidence: knownConfidence ? rawConfidence : 'medium',
     mark: rawStatus === 'returned' || rawStatus === 'cancelled' ? 'return' : 'mine',
-    links,
   }
+  if (link !== undefined) draft.link = link
   return { ok: true, draft, issues }
 }
 

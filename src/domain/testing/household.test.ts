@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 import { isValidIsoDateTime, type IsoDateTime } from '../dates'
 import {
   defaultHouseholdPrefs,
+  mergeHouseholdPrefs,
   newHousehold,
   type Household,
   type HouseholdPrefs,
@@ -101,5 +102,48 @@ describe('newHousehold', () => {
 
   it('throws for an Invalid Date', () => {
     expect(() => newHousehold({ id: 'household-9', now: new Date('nope') })).toThrow(RangeError)
+  })
+})
+
+describe('mergeHouseholdPrefs', () => {
+  it.each([
+    { case: 'undefined', saved: undefined },
+    { case: 'null', saved: null },
+    { case: 'a string', saved: '0.75' },
+    { case: 'an array', saved: [0.75] },
+    { case: 'an empty object', saved: {} },
+    { case: 'a missing share', saved: { other: 0.75 } },
+    { case: 'a share written as text', saved: { reorderDefaultShare: '0.9' } },
+  ])('gives the defaults for $case', ({ saved }) => {
+    expect(mergeHouseholdPrefs(saved)).toEqual({ reorderDefaultShare: DEFAULT_SHARE })
+  })
+
+  it.each([
+    { share: 0, kept: false },
+    { share: 0.005, kept: false },
+    { share: 0.01, kept: true },
+    { share: 1, kept: true },
+    { share: 1.01, kept: false },
+    { share: 0.333, kept: false }, // more than 2 decimals
+    { share: Number.NaN, kept: false },
+  ])('a share of $share is kept: $kept', ({ share, kept }) => {
+    expect(mergeHouseholdPrefs({ reorderDefaultShare: share })).toEqual({
+      reorderDefaultShare: kept ? share : DEFAULT_SHARE,
+    })
+  })
+
+  it('drops unknown keys', () => {
+    expect(mergeHouseholdPrefs({ reorderDefaultShare: 0.75, currency: 'EUR' })).toEqual({
+      reorderDefaultShare: 0.75,
+    })
+  })
+
+  it('gives a new object each call, never the one passed in', () => {
+    const saved = { reorderDefaultShare: 0.75 }
+    const merged = mergeHouseholdPrefs(saved)
+    expect(merged).not.toBe(saved)
+    expect(mergeHouseholdPrefs(undefined)).not.toBe(mergeHouseholdPrefs(undefined))
+    merged.reorderDefaultShare = 0.5
+    expect(saved.reorderDefaultShare).toBe(0.75)
   })
 })

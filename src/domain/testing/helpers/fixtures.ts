@@ -18,7 +18,7 @@ export const NOW: IsoDateTime = '2026-11-14T09:30:00.000Z'
 
 /**
  * A valid, invented item at CURRENT_SCHEMA_VERSION in the makeHousehold() household: 3 tubes in
- * stock, reorder at 1 left, no lifetime, no dates, no links, not deleted. validateItem finds
+ * stock, reorder at 1 left, no lifetime, no dates, no link, not deleted. validateItem finds
  * nothing wrong with it, and its status is 'ok'.
  * Pass overrides for the fields a test is about.
  */
@@ -37,7 +37,6 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     reorder: { kind: 'count', atOrBelow: 1 },
     buyUpTo: 3,
     notes: '',
-    links: {},
     isExample: false,
     householdId: 'test-household',
     deleted: false,

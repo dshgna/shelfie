@@ -46,7 +46,6 @@ const cleanDraft: ImportDraft = {
   alternatives: [],
   confidence: 'high',
   mark: 'mine',
-  links: {},
 }
 
 /** Runs normRow and fails the test if there is no draft. */
@@ -82,7 +81,6 @@ describe('normRow', () => {
         alternatives: [],
         confidence: 'medium',
         mark: 'mine',
-        links: {},
       },
       issues: [],
     })
@@ -333,41 +331,62 @@ describe('normRow', () => {
       codes: ['unknown-status'],
     },
     { case: 'unknown status', row: { status: 'unknown' }, expected: { mark: 'mine' }, codes: [] },
-    // Links
+  ])('$case', ({ row, expected, codes }) => {
+    const { draft, issues } = draftOf({ ...cleanRow, ...row })
+    expect(draft).toMatchObject(expected)
+    expect(issues.map((issue) => issue.code)).toEqual(codes)
+  })
+
+  // One link per item: the row's `link`, or else its `blink` (brand page).
+  it.each([
     {
       case: 'https link',
       row: { link: 'https://shop.example/lemon' },
-      expected: { links: { product: 'https://shop.example/lemon' } },
+      link: 'https://shop.example/lemon',
       codes: [],
     },
     {
-      case: 'http link is kept',
+      case: 'http brand link is kept when there is no product link',
       row: { blink: 'http://brand.example' },
-      expected: { links: { brand: 'http://brand.example' } },
+      link: 'http://brand.example',
       codes: [],
+    },
+    {
+      case: 'product link wins over the brand link',
+      row: { link: 'https://shop.example/lemon', blink: 'https://brand.example' },
+      link: 'https://shop.example/lemon',
+      codes: [],
+    },
+    {
+      case: 'unsafe product link falls back to the brand link',
+      row: { link: 'javascript:alert(1)', blink: 'https://brand.example' },
+      link: 'https://brand.example',
+      codes: ['link-scheme'],
     },
     {
       case: 'javascript: link',
       row: { link: 'javascript:alert(1)' },
-      expected: { links: {} },
+      link: undefined,
       codes: ['link-scheme'],
     },
     {
       case: 'data: link',
       row: { blink: 'data:text/html,hi' },
-      expected: { links: {} },
+      link: undefined,
       codes: ['link-scheme'],
     },
     {
       case: 'link with spaces',
       row: { link: ' https://shop.example ' },
-      expected: { links: {} },
+      link: undefined,
       codes: ['link-scheme'],
     },
-    { case: 'number as link', row: { link: 42 }, expected: { links: {} }, codes: ['link-scheme'] },
-  ])('$case', ({ row, expected, codes }) => {
+    { case: 'number as link', row: { link: 42 }, link: undefined, codes: ['link-scheme'] },
+    { case: 'no link', row: {}, link: undefined, codes: [] },
+  ])('link: $case', ({ row, link, codes }) => {
     const { draft, issues } = draftOf({ ...cleanRow, ...row })
-    expect(draft).toMatchObject(expected)
+    expect(draft.link).toBe(link)
+    expect('link' in draft).toBe(link !== undefined)
     expect(issues.map((issue) => issue.code)).toEqual(codes)
   })
 
@@ -474,17 +493,17 @@ describe('normRow', () => {
       quantity: 1,
       unit: 'bottle',
       category: 'household',
-      links: {},
     })
     expect(draft.boughtAt).toBe(TODAY)
     expect(draft).not.toHaveProperty('extra')
+    expect(draft).not.toHaveProperty('link')
     expect(issues.map((issue) => `${issue.field}:${issue.code}`).sort()).toEqual(
       [
         'boughtAt:date-in-future',
         'brand:wrong-type',
         'category:unknown-category',
         'quantity:count-adjusted',
-        'links.product:link-scheme',
+        'link:link-scheme',
       ].sort(),
     )
     for (const issue of issues) expect(issue.message).not.toBe('')

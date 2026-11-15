@@ -25,6 +25,22 @@ describe('validateItem', () => {
     expect(validateItem(unsaved)).toEqual([])
   })
 
+  describe('name', () => {
+    it.each([
+      { case: 'empty', name: '' },
+      { case: 'only spaces', name: '   ' },
+      { case: 'only a tab and a line break', name: '\t\n' },
+    ])('reports missing-name when it is $case', ({ name }) => {
+      expect(validateItem(makeItem({ name }))).toEqual([
+        { field: 'name', code: 'missing-name', message: 'Enter a name for the item.' },
+      ])
+    })
+
+    it('accepts a name with spaces around it', () => {
+      expect(codes(makeItem({ name: '  Gel Cleanser  ' }))).toEqual([])
+    })
+  })
+
   describe('start date', () => {
     it.each([
       { case: 'lifetime and stock', lifeDays: 60, quantity: 1, expected: [] },
@@ -135,12 +151,12 @@ describe('validateItem', () => {
       { link: 'http://example.com/soap', valid: true },
       { link: 'javascript:alert(1)', valid: false },
       { link: 'not a url', valid: false },
-    ])('product and brand link $link is valid: $valid', ({ link, valid }) => {
-      const item = makeItem({ links: { product: link, brand: link } })
-      const expected = valid ? [] : ['link-scheme', 'link-scheme']
+    ])('link $link is valid: $valid', ({ link, valid }) => {
+      const item = makeItem({ link })
+      const expected = valid ? [] : ['link-scheme']
       expect(codes(item)).toEqual(expected)
       if (!valid) {
-        expect(validateItem(item).map((i) => i.field)).toEqual(['links.product', 'links.brand'])
+        expect(validateItem(item).map((i) => i.field)).toEqual(['link'])
       }
     })
   })
@@ -188,17 +204,16 @@ describe('normalizeItem', () => {
   })
 
   it('changes nothing else', () => {
-    const input = makeItem({ lifeDays: undefined, links: { product: 'https://example.com' } })
+    const input = makeItem({ lifeDays: undefined, link: 'https://example.com' })
     const expected: Item = { ...input }
     delete expected.startedOn
     expect(normalizeItem(input)).toEqual(expected)
   })
 
   it('never changes the item it is given', () => {
-    const input = makeItem({ quantity: 0, links: { product: 'https://example.com' } })
+    const input = makeItem({ quantity: 0, link: 'https://example.com' })
     const before = JSON.parse(JSON.stringify(input)) as Item
     // Frozen objects throw if anything tries to change them.
-    Object.freeze(input.links)
     Object.freeze(input.reorder)
     Object.freeze(input)
 
@@ -206,7 +221,6 @@ describe('normalizeItem', () => {
 
     expect(input).toEqual(before)
     expect(result).not.toBe(input)
-    expect(result.links).not.toBe(input.links)
     expect(result.reorder).not.toBe(input.reorder)
   })
 })

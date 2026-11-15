@@ -1,12 +1,14 @@
 import 'fake-indexeddb/auto'
+import Dexie from 'dexie'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { Item } from '../../domain/item'
 import {
   makeHousehold,
   makeItem,
   makeItemPurchaseRecord,
   makeUser,
 } from '../../domain/testing/helpers/fixtures'
-import { openDb, type ShelfieDB } from '../db'
+import { STORES_V1, openDb, type ShelfieDB } from '../db'
 
 // Each test gets its own database, deleted afterwards, so no test sees another's rows.
 let dbCount = 0
@@ -130,5 +132,80 @@ describe('item record queries', () => {
     ])
     const ids = await db.itemPurchaseRecords.orderBy('addedAt').primaryKeys()
     expect(ids).toEqual(['earliest', 'middle', 'latest'])
+  })
+})
+
+describe('transactions', () => {
+  it('rolls back every write when the transaction throws after writing', async () => {
+    const before = makeItem({ id: 'a', name: 'Lemon Soap' })
+    await db.items.put(before)
+
+    await expect(
+      db.transaction('rw', db.items, async () => {
+        await db.items.put({ ...before, name: 'Lime Soap' })
+        await db.items.put(makeItem({ id: 'b' }))
+        // Inside the transaction the writes are already visible...
+        expect(await db.items.get('a')).toMatchObject({ name: 'Lime Soap' })
+        throw new Error('Invented failure after writing')
+      }),
+    ).rejects.toThrow('Invented failure after writing')
+
+    // ...but once it has failed, neither the change nor the new row was kept.
+    expect(await db.items.get('a')).toEqual(before)
+    expect(await db.items.get('b')).toBeUndefined()
+  })
+})
+
+describe('reopening', () => {
+  it('keeps the rows of all four tables after closing and opening again', async () => {
+    const user = makeUser()
+    const household = makeHousehold()
+    const item = makeItem()
+    const record = makeItemPurchaseRecord()
+    await db.users.put(user)
+    await db.households.put(household)
+    await db.items.put(item)
+    await db.itemPurchaseRecords.put(record)
+    db.close()
+
+    // A new connection under the same name, as when the app starts again. It replaces `db`, so
+    // afterEach deletes it.
+    db = openDb(db.name)
+
+    expect(await db.users.get(user.id)).toEqual(user)
+    expect(await db.households.get(household.id)).toEqual(household)
+    expect(await db.items.get(item.id)).toEqual(item)
+    expect(await db.itemPurchaseRecords.get(record.id)).toEqual(record)
+  })
+})
+
+describe('upgrading', () => {
+  it('keeps an item through an upgrade to version 2 and finds it by the new index', async () => {
+    const item = makeItem({ id: 'a', name: 'Lemon Soap' })
+    await db.items.put(item) // opens the database at version 1
+    db.close()
+
+    // A test-only definition of the same database: version 1 exactly as ShelfieDB has it, then a
+    // version 2 that adds a `name` index to items. ShelfieDB itself stays at version 1.
+    const upgraded = new Dexie(db.name)
+    const seenByUpgrade: Item[] = []
+    upgraded.version(1).stores(STORES_V1)
+    upgraded
+      .version(2)
+      .stores({ items: `${STORES_V1.items}, name` })
+      .upgrade(async (tx) => {
+        seenByUpgrade.push(...(await tx.table<Item, string>('items').toArray()))
+      })
+
+    try {
+      const items = upgraded.table<Item, string>('items')
+      expect(await items.get('a')).toEqual(item)
+      expect(await items.where('name').equals('Lemon Soap').primaryKeys()).toEqual(['a'])
+      // The upgrade function ran, once, and saw the version 1 row.
+      expect(seenByUpgrade).toEqual([item])
+      expect(upgraded.verno).toBe(2)
+    } finally {
+      upgraded.close()
+    }
   })
 })

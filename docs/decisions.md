@@ -4,6 +4,8 @@ Newest first. One line per decision, with the reason.
 
 ## 15 Nov 2026
 
+- **Settings reads are tolerant and updates are strict.** `SettingsRepository` reads prefs through `mergeUserPrefs`/`mergeHouseholdPrefs`, so a damaged or older row still gives complete, valid prefs, while an update with an invalid value or unknown key is refused and writes nothing, so bad values never get stored. The user and household rows have no timestamp and are not synced yet.
+
 - **`ItemRepository.put` refuses to move an item between households, and `subscribe` only hears its own repository object.** A `put` whose id is already stored (even deleted) in another household rejects with `ItemHouseholdMismatchError` and writes nothing, so a bug or a bad import can't silently take an item from one household into another. Listeners hear only writes through the same repository object, so the app creates one and shares it; other repositories and other tabs will need Dexie's liveQuery or a BroadcastChannel later.
 
 - **The UI reads and writes items only through `ItemRepository`.** One interface with an in-memory and a Dexie version that behave identically (one shared contract test), so the UI can be built before the database is wired in and storage can change without touching it. Rules: `put` stamps `updatedAt` from the clock; `remove` marks the item `deleted` instead of erasing it; `list` and `get` hide deleted items; objects are copied in and out; listeners run only after the write has committed.

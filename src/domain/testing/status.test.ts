@@ -9,7 +9,10 @@ import {
   needsExpiry,
   needsRestock,
   reorderAt,
+  buyCount,
   status,
+  stockLeft,
+  stockTarget,
   timing,
   type Status,
 } from '../status'
@@ -287,4 +290,71 @@ describe('boundaries added in the test review', () => {
       expect(status(makeItem({ expiresOn }), today)).toBe(expected)
     },
   )
+})
+
+describe('stockLeft', () => {
+  it('uses the share left of the one in use when timing can be worked out', () => {
+    expect(stockLeft(shareItem({ startedOn: daysAgo(0) }), TODAY)).toBe(1)
+    expect(stockLeft(shareItem({ startedOn: daysAgo(15) }), TODAY)).toBe(0.5)
+    expect(stockLeft(shareItem({ startedOn: daysAgo(27), quantity: 3 }), TODAY)).toBeCloseTo(0.1)
+  })
+
+  it('is 0, not negative, once the one in use is past its estimated life', () => {
+    expect(stockLeft(shareItem({ startedOn: daysAgo(45) }), TODAY)).toBe(0)
+  })
+
+  it('uses quantity over buyUpTo when there is no timing', () => {
+    expect(stockLeft(makeItem({ quantity: 3, buyUpTo: 4 }), TODAY)).toBe(0.75)
+    expect(stockLeft(makeItem({ quantity: 0, buyUpTo: 4 }), TODAY)).toBe(0)
+  })
+
+  it('targets one more than the count rule when that is larger than buyUpTo', () => {
+    const item = makeItem({ quantity: 2, buyUpTo: 1, reorder: { kind: 'count', atOrBelow: 3 } })
+    expect(stockLeft(item, TODAY)).toBe(0.5)
+  })
+
+  it('counts a share rule as 0, so the target is at least 1', () => {
+    const item = makeItem({ quantity: 1, buyUpTo: 0, reorder: { kind: 'share', share: 0.9 } })
+    expect(stockLeft(item, TODAY)).toBe(1)
+  })
+
+  it('never goes above 1 when more are in stock than the target', () => {
+    expect(stockLeft(makeItem({ quantity: 9, buyUpTo: 3 }), TODAY)).toBe(1)
+  })
+
+  it('falls back to quantity over target without a start date or lifetime', () => {
+    expect(stockLeft(shareItem({ startedOn: undefined, quantity: 1, buyUpTo: 2 }), TODAY)).toBe(0.5)
+    expect(stockLeft(shareItem({ lifeDays: undefined, quantity: 1, buyUpTo: 2 }), TODAY)).toBe(0.5)
+  })
+})
+
+describe('stockTarget', () => {
+  it('is buyUpTo when that is larger than the count rule', () => {
+    expect(stockTarget(makeItem({ buyUpTo: 4, reorder: { kind: 'count', atOrBelow: 1 } }))).toBe(4)
+  })
+
+  it('is one more than the count rule when that is larger', () => {
+    expect(stockTarget(makeItem({ buyUpTo: 1, reorder: { kind: 'count', atOrBelow: 3 } }))).toBe(4)
+  })
+
+  it('counts a share rule as 0, so it is at least 1', () => {
+    expect(stockTarget(makeItem({ buyUpTo: 0, reorder: { kind: 'share', share: 0.9 } }))).toBe(1)
+  })
+})
+
+describe('buyCount', () => {
+  it('tops up to the target', () => {
+    expect(buyCount(makeItem({ quantity: 1, buyUpTo: 4 }))).toBe(3)
+    expect(buyCount(makeItem({ quantity: 0, buyUpTo: 2 }))).toBe(2)
+  })
+
+  it('is at least 1, even at or above the target', () => {
+    expect(buyCount(makeItem({ quantity: 3, buyUpTo: 3 }))).toBe(1)
+    expect(buyCount(makeItem({ quantity: 9, buyUpTo: 3 }))).toBe(1)
+  })
+
+  it('uses the count rule when it sets a higher target than buyUpTo', () => {
+    const item = makeItem({ quantity: 2, buyUpTo: 1, reorder: { kind: 'count', atOrBelow: 4 } })
+    expect(buyCount(item)).toBe(3)
+  })
 })

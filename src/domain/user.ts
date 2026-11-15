@@ -27,6 +27,24 @@ export function defaultUserPrefs(): UserPrefs {
   return { theme: 'system' }
 }
 
+function isTheme(value: unknown): value is Theme {
+  return value === 'system' || value === 'light' || value === 'dark'
+}
+
+/**
+ * Complete, valid user preferences from anything (a stored row, an imported file). Each field is
+ * checked: a valid value is kept, a missing or invalid one becomes the default, and unknown keys
+ * are dropped. A value that isn't an object (null, an array, text) gives the defaults.
+ * Always a new object.
+ */
+export function mergeUserPrefs(saved: unknown): UserPrefs {
+  const prefs = defaultUserPrefs()
+  if (typeof saved !== 'object' || saved === null || Array.isArray(saved)) return prefs
+  const fields = saved as Record<string, unknown>
+  if (isTheme(fields.theme)) prefs.theme = fields.theme
+  return prefs
+}
+
 /** How the key is derived from the passphrase (Web Crypto PBKDF2 with SHA-256). Not secret. */
 export interface KdfParams {
   algorithm: 'PBKDF2-SHA256'

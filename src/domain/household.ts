@@ -4,6 +4,7 @@
 import type { IsoDateTime } from './dates'
 import { CURRENT_SCHEMA_VERSION, type ReorderShare } from './item'
 import { DEFAULT_SHARE } from './status'
+import { isValidShare } from './validate'
 
 /**
  * Defaults set for the whole household, so everyone sharing the shelves gets the same ones.
@@ -18,6 +19,21 @@ export interface HouseholdPrefs {
 /** Defaults for a new household: reorder at DEFAULT_SHARE. A new object each time. */
 export function defaultHouseholdPrefs(): HouseholdPrefs {
   return { reorderDefaultShare: DEFAULT_SHARE }
+}
+
+/**
+ * Complete, valid household preferences from anything (a stored row, an imported file). Each
+ * field is checked: a valid value is kept, a missing or invalid one becomes the default, and
+ * unknown keys are dropped. A value that isn't an object (null, an array, text) gives the
+ * defaults. `reorderDefaultShare` must be a number that isValidShare accepts (0.01 to 1, at most
+ * 2 decimals). Always a new object.
+ */
+export function mergeHouseholdPrefs(saved: unknown): HouseholdPrefs {
+  const prefs = defaultHouseholdPrefs()
+  if (typeof saved !== 'object' || saved === null || Array.isArray(saved)) return prefs
+  const share = (saved as Record<string, unknown>).reorderDefaultShare
+  if (typeof share === 'number' && isValidShare(share)) prefs.reorderDefaultShare = share
+  return prefs
 }
 
 export interface Household {

@@ -1,4 +1,4 @@
-// The repository interface and the in-memory repository must never use IndexedDB, so the UI and
+// The repository interfaces and the in-memory repositories must never use IndexedDB, so the UI and
 // tests can run on them without a database. They live in src/storage, where ESLint allows Dexie,
 // so this test checks them instead. Lives in src/ because it reads files (node:fs), like the other
 // file-reading tests.
@@ -12,7 +12,12 @@ const read = (path: string): string => readFileSync(new URL(path, import.meta.ur
 const INDEXEDDB_IMPORT =
   /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)['"](?:dexie|fake-indexeddb)(?:\/[^'"]*)?['"]/
 
-const DEXIE_FREE = ['./storage/repository.ts', './storage/memory-repository.ts']
+const DEXIE_FREE = [
+  './storage/repository.ts',
+  './storage/memory-repository.ts',
+  './storage/settings-repository.ts',
+  './storage/memory-settings-repository.ts',
+]
 
 describe('storage boundaries', () => {
   it.each(DEXIE_FREE)('%s does not import Dexie or fake-indexeddb', (path) => {

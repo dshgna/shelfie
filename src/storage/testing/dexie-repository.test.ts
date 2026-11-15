@@ -18,6 +18,7 @@ describeItemRepositoryContract('dexie', () => {
       current = iso
     },
     peek: (id) => db.items.get(id),
+    peekPurchase: (id) => db.itemPurchaseRecords.get(id),
     cleanup: () => db.delete(),
   }
 })

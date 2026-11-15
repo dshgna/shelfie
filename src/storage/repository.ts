@@ -28,6 +28,14 @@
 // - Listeners run after the write has been saved (for Dexie, after the transaction has committed),
 //   never inside it. Each listener runs in its own try/catch: one that throws doesn't stop the
 //   others or make the write fail, and its error is reported with console.error.
+// - `putWithPurchase` saves an item and one new purchase record of it together, in one write (for
+//   Dexie, one transaction over both tables): both are saved or neither is. It follows every `put`
+//   rule above for the item, reads the clock once, and stamps the item's `updatedAt` and the
+//   record's `addedAt` and `updatedAt` with that same value. Purchase records are only ever added
+//   (people can't delete or replace one), so it rejects, writing nothing and not notifying, if the
+//   record's `itemId` isn't the item's id (PurchaseRecordMismatchError) or a record with the same
+//   id already exists (PurchaseRecordExistsError). Like `put`, it doesn't validate: callers check
+//   the quantity with isValidRecordQuantity first. Listeners are told once.
 // - `subscribe` only hears writes made through the same repository object. The app should create
 //   one repository and share it. Writes through another repository object, or from another browser
 //   tab, are not heard: that needs a different mechanism later (Dexie's liveQuery or a
@@ -35,6 +43,7 @@
 
 import { isValidIsoDateTime, type IsoDateTime } from '../domain/dates'
 import type { Item } from '../domain/item'
+import type { ItemPurchaseRecord } from '../domain/item-purchase-record'
 
 export interface ItemRepository {
   /** The household's items that are not deleted, in no particular order (the UI sorts). */
@@ -47,6 +56,16 @@ export interface ItemRepository {
    * ItemHouseholdMismatchError if the id is already stored in another household.
    */
   put(item: Omit<Item, 'updatedAt'>): Promise<Item>
+  /**
+   * Saves an item (new or changed) and adds one purchase record of it, both or neither, with
+   * `updatedAt`, `addedAt` and the record's `updatedAt` from one clock reading. Returns what was
+   * stored. Rejects like `put`, and also with PurchaseRecordMismatchError or
+   * PurchaseRecordExistsError (see the rules at the top of this file).
+   */
+  putWithPurchase(
+    item: Omit<Item, 'updatedAt'>,
+    purchase: Omit<ItemPurchaseRecord, 'addedAt' | 'updatedAt'>,
+  ): Promise<{ item: Item; purchase: ItemPurchaseRecord }>
   /** Marks the item deleted and stamps `updatedAt`. Does nothing for a missing or deleted id. */
   remove(id: string): Promise<void>
   /**
@@ -69,6 +88,44 @@ export class ItemHouseholdMismatchError extends Error {
     )
     this.name = 'ItemHouseholdMismatchError'
   }
+}
+
+/** Why `putWithPurchase` rejected: the record belongs to another item. Nothing was written. */
+export class PurchaseRecordMismatchError extends Error {
+  constructor(recordId: string, recordItemId: string, itemId: string) {
+    super(
+      `ItemRepository: purchase record "${recordId}" is for item "${recordItemId}", ` +
+        `not "${itemId}"`,
+    )
+    this.name = 'PurchaseRecordMismatchError'
+  }
+}
+
+/**
+ * Why `putWithPurchase` rejected: a purchase record with this id is already stored, and records
+ * are only ever added, never replaced. Nothing was written.
+ */
+export class PurchaseRecordExistsError extends Error {
+  constructor(recordId: string) {
+    super(`ItemRepository: purchase record "${recordId}" already exists`)
+    this.name = 'PurchaseRecordExistsError'
+  }
+}
+
+/**
+ * Checks a purchase record before `putWithPurchase` writes anything.
+ * @throws PurchaseRecordMismatchError if the record is for another item.
+ * @throws PurchaseRecordExistsError if `existing` (the stored record with this id) is defined.
+ */
+export function checkNewPurchase(
+  existing: ItemPurchaseRecord | undefined,
+  purchase: Pick<ItemPurchaseRecord, 'id' | 'itemId'>,
+  item: Pick<Item, 'id'>,
+): void {
+  if (purchase.itemId !== item.id) {
+    throw new PurchaseRecordMismatchError(purchase.id, purchase.itemId, item.id)
+  }
+  if (existing) throw new PurchaseRecordExistsError(purchase.id)
 }
 
 /**
@@ -102,8 +159,11 @@ export function readClock(now: () => IsoDateTime): IsoDateTime {
   return value
 }
 
-/** The listener list both repositories share: subscribe, and notify after a saved write. */
-export function createListeners(): {
+/**
+ * The listener list the repositories share: subscribe, and notify after a saved write. `label`
+ * names the repository in the error reported when a listener throws, such as 'ItemRepository'.
+ */
+export function createListeners(label: string): {
   subscribe: (listener: () => void) => () => void
   notify: () => void
 } {
@@ -124,7 +184,7 @@ export function createListeners(): {
         try {
           listener()
         } catch (error) {
-          console.error('ItemRepository: a change listener threw', error)
+          console.error(`${label}: a change listener threw`, error)
         }
       }
     },

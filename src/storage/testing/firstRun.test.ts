@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { CURRENT_SCHEMA_VERSION } from '../../domain/item'
 import { defaultHouseholdPrefs } from '../../domain/household'
 import { defaultUserPrefs } from '../../domain/user'
+import { makeHousehold, makeUser } from '../../domain/testing/helpers/fixtures'
 import { openDb, type ShelfieDB } from '../db'
 import { ensureLocalProfile, type FirstRunDeps } from '../firstRun'
 
@@ -104,5 +105,48 @@ describe('ensureLocalProfile', () => {
     )
     expect(await db.households.count()).toBe(0)
     expect(await db.users.count()).toBe(0)
+  })
+
+  it('creates one profile when two calls start at the same time', async () => {
+    const { deps } = fakeDeps()
+
+    const [first, second] = await Promise.all([
+      ensureLocalProfile(db, deps),
+      ensureLocalProfile(db, deps),
+    ])
+
+    expect(second).toEqual(first)
+    expect(await db.households.count()).toBe(1)
+    expect(await db.users.count()).toBe(1)
+  })
+
+  it('throws when the user points at a missing household, and writes nothing', async () => {
+    const user = makeUser({ id: 'orphan-user', householdId: 'missing-household' })
+    await db.users.put(user)
+    const { deps, calls } = fakeDeps()
+
+    await expect(ensureLocalProfile(db, deps)).rejects.toThrow(
+      'User orphan-user points at household missing-household, which is missing',
+    )
+    expect(await db.users.toArray()).toEqual([user])
+    expect(await db.households.count()).toBe(0)
+    expect(calls).toEqual({ now: 0, newId: 0 })
+  })
+
+  // Records what happens today; it is not a decision that this is right. If ensureLocalProfile
+  // is changed to reuse the existing household, change this test with it.
+  it('today: with a household but no user, adds a second household and leaves the first without a user', async () => {
+    const lone = makeHousehold({ id: 'lone-household' })
+    await db.households.put(lone)
+    const { deps } = fakeDeps()
+
+    const { user, household } = await ensureLocalProfile(db, deps)
+
+    expect(household.id).toBe('fake-id-1')
+    expect(user.householdId).toBe('fake-id-1')
+    expect(await db.households.get('lone-household')).toEqual(lone)
+    const householdIds = (await db.households.toArray()).map((row) => row.id).sort()
+    expect(householdIds).toEqual(['fake-id-1', 'lone-household'])
+    expect(await db.users.where('householdId').equals('lone-household').count()).toBe(0)
   })
 })

@@ -23,6 +23,19 @@ import type { Item } from '../domain/item'
 import type { ItemPurchaseRecord } from '../domain/item-purchase-record'
 import type { User } from '../domain/user'
 
+/**
+ * The tables and indexes of database version 1. Exported so a test can rebuild version 1 exactly
+ * when it checks an upgrade to a later version. Never change it once real data exists: add a new
+ * version instead (see the top of this file).
+ */
+export const STORES_V1 = {
+  users: 'id, householdId',
+  households: 'id',
+  items: 'id, householdId, [category+group], updatedAt',
+  // itemId finds every purchase of one item; addedAt lists them in the order they were added.
+  itemPurchaseRecords: 'id, itemId, addedAt',
+} as const
+
 export class ShelfieDB extends Dexie {
   declare users: Table<User, string>
   declare households: Table<Household, string>
@@ -32,13 +45,7 @@ export class ShelfieDB extends Dexie {
 
   constructor(name = 'shelfie') {
     super(name)
-    this.version(1).stores({
-      users: 'id, householdId',
-      households: 'id',
-      items: 'id, householdId, [category+group], updatedAt',
-      // itemId finds every purchase of one item; addedAt lists them in the order they were added.
-      itemPurchaseRecords: 'id, itemId, addedAt',
-    })
+    this.version(1).stores(STORES_V1)
   }
 }
 

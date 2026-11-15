@@ -28,7 +28,7 @@ const soap = {
   reorder: { kind: 'share', share: 0.9 },
   buyUpTo: 2,
   notes: '',
-  links: { product: 'https://example.com/lavender-soap' },
+  link: 'https://example.com/lavender-soap',
   isExample: false,
   householdId: 'test-household',
   deleted: false,
@@ -50,7 +50,6 @@ const sponges = {
   reorder: { kind: 'count', atOrBelow: 1 },
   buyUpTo: 4,
   notes: '',
-  links: {},
   isExample: true,
   householdId: 'test-household',
   deleted: false,
@@ -60,7 +59,8 @@ const sponges = {
 describe('Item type', () => {
   it('accepts full and minimal invented items', () => {
     expect(soap.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
-    expect(sponges.links).toEqual({})
+    expect(soap.link).toBe('https://example.com/lavender-soap')
+    expect('link' in sponges).toBe(false)
   })
 
   it('types the important fields', () => {

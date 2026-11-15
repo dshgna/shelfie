@@ -4,8 +4,14 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Item } from '../../../domain/item'
-import { NOW, makeItem } from '../../../domain/testing/helpers/fixtures'
-import { ItemHouseholdMismatchError, type ItemRepository } from '../../repository'
+import type { ItemPurchaseRecord } from '../../../domain/item-purchase-record'
+import { NOW, makeItem, makeItemPurchaseRecord } from '../../../domain/testing/helpers/fixtures'
+import {
+  ItemHouseholdMismatchError,
+  PurchaseRecordExistsError,
+  PurchaseRecordMismatchError,
+  type ItemRepository,
+} from '../../repository'
 
 /** One fresh repository for one test, with a clock the test controls. */
 export interface ContractSubject {
@@ -14,6 +20,8 @@ export interface ContractSubject {
   setNow(iso: string): void
   /** The stored row, deleted or not, read around the repository (a copy). */
   peek(id: string): Promise<Item | undefined>
+  /** The stored purchase record, read around the repository (a copy). */
+  peekPurchase(id: string): Promise<ItemPurchaseRecord | undefined>
   /** Called after each test, for example to delete the test's database. */
   cleanup(): void | Promise<void>
 }
@@ -24,6 +32,20 @@ const T2 = '2026-11-14T10:00:00.000Z'
 const T3 = '2026-11-14T11:00:00.000Z'
 
 const idsOf = (items: Item[]): string[] => items.map((item) => item.id).sort()
+
+/** A purchase record as putWithPurchase takes it: no addedAt or updatedAt yet. */
+function newPurchase(
+  overrides: Partial<ItemPurchaseRecord> = {},
+): Omit<ItemPurchaseRecord, 'addedAt' | 'updatedAt'> {
+  const record: Partial<ItemPurchaseRecord> = makeItemPurchaseRecord({
+    id: 'p1',
+    itemId: 'a',
+    ...overrides,
+  })
+  delete record.addedAt
+  delete record.updatedAt
+  return record as Omit<ItemPurchaseRecord, 'addedAt' | 'updatedAt'>
+}
 
 export function describeItemRepositoryContract(
   name: string,
@@ -103,18 +125,18 @@ export function describeItemRepositoryContract(
       })
 
       it('hands out copies: changing an object in or out never changes what is stored', async () => {
-        const input = makeItem({ id: 'a', name: 'Lemon Soap', links: {} })
+        const input = makeItem({ id: 'a', name: 'Lemon Soap', link: 'https://example.com/soap' })
         const saved = await repo.put(input)
         input.name = 'Changed after put'
         saved.name = 'Changed result'
-        saved.links.product = 'https://example.com/changed'
+        if (saved.reorder.kind === 'count') saved.reorder.atOrBelow = 7
         const [listed] = await repo.list(input.householdId)
         if (listed) listed.name = 'Changed list entry'
         const got = await repo.get('a')
         if (got) got.reorder = { kind: 'count', atOrBelow: 9 }
 
         const stored = await repo.get('a')
-        expect(stored).toMatchObject({ name: 'Lemon Soap', links: {} })
+        expect(stored).toMatchObject({ name: 'Lemon Soap', link: 'https://example.com/soap' })
         expect(stored?.reorder).toEqual(makeItem().reorder)
       })
 
@@ -156,11 +178,113 @@ export function describeItemRepositoryContract(
         expect(listener).not.toHaveBeenCalled()
       })
 
+      it('keeps listeners subscribed after a refused put, so they hear the next write', async () => {
+        await repo.put(makeItem({ id: 'a', householdId: 'home' }))
+        const listener = vi.fn()
+        repo.subscribe(listener)
+        await expect(repo.put(makeItem({ id: 'a', householdId: 'cabin' }))).rejects.toThrow(
+          ItemHouseholdMismatchError,
+        )
+        subject.setNow('not a time')
+        await expect(repo.put(makeItem({ id: 'b' }))).rejects.toThrow(RangeError)
+        expect(listener).not.toHaveBeenCalled()
+
+        subject.setNow(T2)
+        await repo.put(makeItem({ id: 'b' }))
+        expect(listener).toHaveBeenCalledTimes(1)
+      })
+
       it('still saves an item with the same id in the same household', async () => {
         await repo.put(makeItem({ id: 'a', householdId: 'home', name: 'Lemon Soap' }))
         subject.setNow(T2)
         await repo.put(makeItem({ id: 'a', householdId: 'home', name: 'Lime Soap' }))
         expect(await repo.get('a')).toMatchObject({ name: 'Lime Soap', updatedAt: T2 })
+      })
+    })
+
+    describe('putWithPurchase', () => {
+      it('saves the item and the record, stamped with one clock reading', async () => {
+        subject.setNow(T2)
+        const result = await repo.putWithPurchase(makeItem({ id: 'a' }), newPurchase())
+        expect(result.item).toEqual({ ...makeItem({ id: 'a' }), updatedAt: T2 })
+        expect(result.purchase).toEqual({ ...newPurchase(), addedAt: T2, updatedAt: T2 })
+        expect(await repo.get('a')).toEqual(result.item)
+        expect(await subject.peekPurchase('p1')).toEqual(result.purchase)
+      })
+
+      it('updates an existing item and adds a second record for it', async () => {
+        await repo.putWithPurchase(makeItem({ id: 'a', quantity: 1 }), newPurchase())
+        subject.setNow(T2)
+        await repo.putWithPurchase(makeItem({ id: 'a', quantity: 3 }), newPurchase({ id: 'p2' }))
+        expect(await repo.get('a')).toMatchObject({ quantity: 3, updatedAt: T2 })
+        expect(await subject.peekPurchase('p1')).toMatchObject({ addedAt: T1 })
+        expect(await subject.peekPurchase('p2')).toMatchObject({ addedAt: T2 })
+      })
+
+      it('notifies once, after both are saved', async () => {
+        const seen: Array<[boolean, boolean]> = []
+        repo.subscribe(() => {
+          void Promise.all([repo.get('a'), subject.peekPurchase('p1')]).then(([i, p]) =>
+            seen.push([i !== undefined, p !== undefined]),
+          )
+        })
+        await repo.putWithPurchase(makeItem({ id: 'a' }), newPurchase())
+        await new Promise((resolve) => setTimeout(resolve, 0))
+        expect(seen).toEqual([[true, true]])
+      })
+
+      it('hands out copies: changing an object in or out never changes what is stored', async () => {
+        const item = makeItem({ id: 'a' })
+        const purchase = newPurchase()
+        const result = await repo.putWithPurchase(item, purchase)
+        item.name = 'Changed'
+        purchase.quantity = 99
+        result.item.name = 'Changed'
+        result.purchase.quantity = 99
+        expect(await repo.get('a')).toMatchObject({ name: makeItem().name })
+        expect(await subject.peekPurchase('p1')).toMatchObject({ quantity: 2 })
+      })
+
+      it('refuses a record for another item, and writes neither', async () => {
+        const listener = vi.fn()
+        repo.subscribe(listener)
+        await expect(
+          repo.putWithPurchase(makeItem({ id: 'a' }), newPurchase({ itemId: 'b' })),
+        ).rejects.toThrow(PurchaseRecordMismatchError)
+        expect(await subject.peek('a')).toBeUndefined()
+        expect(await subject.peekPurchase('p1')).toBeUndefined()
+        expect(listener).not.toHaveBeenCalled()
+      })
+
+      it('refuses a record id that already exists, and leaves the item as it was', async () => {
+        const first = await repo.putWithPurchase(makeItem({ id: 'a' }), newPurchase())
+        const listener = vi.fn()
+        repo.subscribe(listener)
+        subject.setNow(T2)
+        await expect(
+          repo.putWithPurchase(makeItem({ id: 'a', quantity: 9 }), newPurchase({ quantity: 5 })),
+        ).rejects.toThrow(PurchaseRecordExistsError)
+        expect(await subject.peek('a')).toEqual(first.item)
+        expect(await subject.peekPurchase('p1')).toEqual(first.purchase)
+        expect(listener).not.toHaveBeenCalled()
+      })
+
+      it('refuses to move the item to another household, and writes no record', async () => {
+        await repo.put(makeItem({ id: 'a', householdId: 'home' }))
+        await expect(
+          repo.putWithPurchase(makeItem({ id: 'a', householdId: 'cabin' }), newPurchase()),
+        ).rejects.toThrow(ItemHouseholdMismatchError)
+        expect(await subject.peek('a')).toMatchObject({ householdId: 'home' })
+        expect(await subject.peekPurchase('p1')).toBeUndefined()
+      })
+
+      it('rejects with a bad clock and writes neither', async () => {
+        subject.setNow('not a time')
+        await expect(repo.putWithPurchase(makeItem({ id: 'a' }), newPurchase())).rejects.toThrow(
+          RangeError,
+        )
+        expect(await subject.peek('a')).toBeUndefined()
+        expect(await subject.peekPurchase('p1')).toBeUndefined()
       })
     })
 
@@ -223,6 +347,16 @@ export function describeItemRepositoryContract(
           expect(listener).not.toHaveBeenCalled()
         },
       )
+
+      it('makes put reject and leave an existing item as it was', async () => {
+        const saved = await repo.put(makeItem({ id: 'a', name: 'Lemon Soap' }))
+        const listener = vi.fn()
+        repo.subscribe(listener)
+        subject.setNow('not a time')
+        await expect(repo.put({ ...saved, name: 'Lime Soap' })).rejects.toThrow(RangeError)
+        expect(await subject.peek('a')).toEqual(saved)
+        expect(listener).not.toHaveBeenCalled()
+      })
 
       it('makes remove reject even for an id that doesn’t exist', async () => {
         const listener = vi.fn()

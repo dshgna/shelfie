@@ -4,6 +4,8 @@ coverage
 playwright-report
 test-results
 prototype
+# Design canvas source files: a reference, kept exactly as downloaded
+design/app-screens/
 ios
 android
 package-lock.json

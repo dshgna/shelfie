@@ -137,18 +137,10 @@ export type ReorderShare = number
 export type ReorderRule =
   { kind: 'count'; atOrBelow: number } | { kind: 'share'; share: ReorderShare }
 
-/** The item's two optional web pages. */
-export interface ItemLinks {
-  /** Product page (prototype `link`). */
-  product?: Link
-  /** Brand page (prototype `blink`). */
-  brand?: Link
-}
-
 /**
  * One thing on a shelf.
  * Text fields are always present and use '' for "not set", as in the prototype.
- * Dates, links and lifeDays are left out when not set, because '' or 0 isn't a real date,
+ * Dates, the link and lifeDays are left out when not set, because '' or 0 isn't a real date,
  * address or lifetime.
  */
 export interface Item {
@@ -189,7 +181,12 @@ export interface Item {
   expiresOn?: IsoDate
   /** Free text; '' when empty (prototype `note`). */
   notes: string
-  links: ItemLinks
+  /**
+   * The one web page for the item, where it is bought. Left out when not set. The prototype had
+   * two (`link` for the product, `blink` for the brand); importers keep the product link, or the
+   * brand link when there is no product link.
+   */
+  link?: Link
   /** True for the example items the app adds for new users, so they can be removed in one go. */
   isExample: boolean
   /**
