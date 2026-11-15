@@ -24,7 +24,7 @@ import {
   type Key,
 } from 'react-aria-components'
 import type { IsoDate } from '../domain/dates'
-import { CATEGORIES, type Category, type Item } from '../domain/item'
+import { CATEGORIES, type Category, type Group, type Item } from '../domain/item'
 import type { ItemRepository } from '../storage/repository'
 import {
   MAX_LENGTH,
@@ -52,7 +52,15 @@ const DANGER = `${BUTTON} border-danger bg-surface text-danger hover:bg-surface-
 const OVERLAY = 'fixed inset-0 z-20 grid place-items-center overflow-y-auto bg-bg/80 p-4'
 const PANEL = 'w-full rounded-3xl border border-line bg-surface p-5 md:p-6'
 
-export type EditorTarget = { kind: 'edit'; item: Item } | { kind: 'add'; householdId: string }
+export type EditorTarget =
+  | { kind: 'edit'; item: Item }
+  | {
+      kind: 'add'
+      householdId: string
+      /** Start on this shelf and group, as "Add a product" on a routine step does. */
+      category?: Category
+      group?: Group
+    }
 
 interface FieldProps {
   label: string
@@ -204,14 +212,22 @@ interface ItemEditorProps {
   target: EditorTarget
   repository: ItemRepository
   today: IsoDate
-  onClose: () => void
+  /** Called when the dialog closes; `savedId` is the item's id when it was just saved. */
+  onClose: (savedId?: string) => void
 }
 
 /** Rendered only while open: mounting opens it, and unmounting returns focus to the trigger. */
 export function ItemEditor({ target, repository, today, onClose }: ItemEditorProps) {
   const editing = target.kind === 'edit' ? target.item : undefined
   const [values, setValues] = useState<FormValues>(() =>
-    editing ? valuesFromItem(editing) : newValues(),
+    editing
+      ? valuesFromItem(editing)
+      : target.kind === 'add' && target.category !== undefined
+        ? {
+            ...newValues(target.category),
+            ...(target.group !== undefined ? { group: target.group } : {}),
+          }
+        : newValues(),
   )
   const [errors, setErrors] = useState<FormErrors>({ fields: {}, other: [] })
   const [saving, setSaving] = useState(false)
@@ -249,7 +265,7 @@ export function ItemEditor({ target, repository, today, onClose }: ItemEditorPro
     try {
       if (result.purchase) await repository.putWithPurchase(result.item, result.purchase)
       else await repository.put(result.item)
-      onClose()
+      onClose(result.item.id)
     } catch (error) {
       console.error('Shelfie: could not save the item', error)
       setErrors({ fields: {}, other: ["Couldn't save. Try again."] })
@@ -379,7 +395,7 @@ export function ItemEditor({ target, repository, today, onClose }: ItemEditorPro
               >
                 Save item
               </Button>
-              <Button onPress={onClose} className={SECONDARY}>
+              <Button onPress={() => onClose()} className={SECONDARY}>
                 Cancel
               </Button>
               {editing && (

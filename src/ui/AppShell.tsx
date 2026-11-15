@@ -2,9 +2,10 @@
 // It reads and writes items only through ItemRepository. The Inventory panel shows the shelves;
 // the Shopping panel stays empty until the shopping list is built.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Tab, TabList, TabPanel, Tabs, type Key } from 'react-aria-components'
 import { startOfToday } from '../domain/dates'
+import { routineFor } from '../domain/routine'
 import { needsExpiry, needsRestock } from '../domain/status'
 import type { ItemRepository } from '../storage/repository'
 import { Filters, NO_FILTERS, type FilterState, type ShowFilter } from './Filters'
@@ -69,6 +70,7 @@ export function AppShell({ repository, householdId }: AppShellProps) {
   const changeQuantity = useChangeQuantity(repository)
   const [page, setPage] = useState<Page>('inventory')
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null)
+  const [focusItemId, setFocusItemId] = useState<string | null>(null)
   // Kept here, not in the tab, so ticks and numbers survive switching tabs (as in the prototype).
   const [shopping, setShopping] = useState<ShoppingState>({ buy: {}, checked: new Set() })
 
@@ -105,6 +107,25 @@ export function AppShell({ repository, householdId }: AppShellProps) {
     )
     return { restock, expiring, attention, sectionCounts }
   }, [items, today])
+
+  // Focus the new item's "Open … to edit" button once its row exists.
+  useEffect(() => {
+    if (focusItemId === null) return
+    const row = document.querySelector(`[data-item-id="${CSS.escape(focusItemId)}"]`)
+    const button = row?.querySelector<HTMLElement>('button')
+    if (button) {
+      button.focus()
+      setFocusItemId(null)
+    }
+  }, [focusItemId, items])
+
+  const routine = useMemo(() => routineFor(items, today), [items, today])
+  // As in the prototype's filtersActive: search, Show, Where and Brand (not sort or section).
+  const filtersActive =
+    query.trim() !== '' ||
+    filters.show !== 'all' ||
+    filters.place !== 'all' ||
+    filters.brand !== 'all'
 
   const categories = useMemo(
     () => shelvesFor(items, { query, section, filters }, today),
@@ -214,6 +235,13 @@ export function AppShell({ repository, householdId }: AppShellProps) {
                     today={today}
                     onChange={changeQuantity}
                     onOpen={(item) => setEditorTarget({ kind: 'edit', item })}
+                    routine={{
+                      routine,
+                      filtersActive,
+                      visible: key === 'all' || key === 'personal',
+                      onAddToStep: (group) =>
+                        setEditorTarget({ kind: 'add', householdId, category: 'skincare', group }),
+                    }}
                   />
                 </TabPanel>
               ))}
@@ -246,7 +274,12 @@ export function AppShell({ repository, householdId }: AppShellProps) {
           target={editorTarget}
           repository={repository}
           today={today}
-          onClose={() => setEditorTarget(null)}
+          onClose={(savedId) => {
+            // A new item replaces whatever opened the editor (such as a routine Gap card), so
+            // focus moves to the new item's row once it is shown.
+            if (savedId !== undefined && editorTarget.kind === 'add') setFocusItemId(savedId)
+            setEditorTarget(null)
+          }}
         />
       )}
     </div>
