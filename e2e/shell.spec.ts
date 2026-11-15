@@ -28,13 +28,15 @@ test('Shop now opens the Shopping tab', async ({ page }) => {
   )
 })
 
-test('Fill my shelves opens a placeholder that closes', async ({ page }) => {
+test('Fill my shelves opens its dialog, which closes back to the button', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Fill my shelves' }).click()
+  const open = page.getByRole('button', { name: 'Fill my shelves' })
+  await open.click()
   const dialog = page.getByRole('dialog', { name: 'Fill my shelves' })
   await expect(dialog).toBeVisible()
-  await dialog.getByRole('button', { name: 'Close' }).click()
+  await dialog.getByRole('button', { name: 'Close Fill my shelves' }).click()
   await expect(dialog).toBeHidden()
+  await expect(open).toBeFocused()
 })
 
 test('shelf sections are tabs, and the Filter button opens its panel', async ({ page }) => {

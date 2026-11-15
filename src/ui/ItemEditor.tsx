@@ -3,28 +3,10 @@
 // React Aria's Modal moves focus into the dialog, keeps it there, closes on Escape and returns
 // focus to whatever opened it.
 
-import { useRef, useState, type ReactNode, type RefObject } from 'react'
-import {
-  Button,
-  Dialog,
-  FieldError,
-  Form,
-  Heading,
-  Input,
-  Label,
-  ListBox,
-  ListBoxItem,
-  Modal,
-  ModalOverlay,
-  Popover,
-  Select,
-  SelectValue,
-  Text,
-  TextField,
-  type Key,
-} from 'react-aria-components'
+import { useRef, useState, type RefObject } from 'react'
+import { Button, Dialog, Form, Heading, Modal, ModalOverlay } from 'react-aria-components'
 import type { IsoDate } from '../domain/dates'
-import { CATEGORIES, type Category, type Group, type Item } from '../domain/item'
+import type { Category, Group, Item } from '../domain/item'
 import type { ItemRepository } from '../storage/repository'
 import {
   MAX_LENGTH,
@@ -41,13 +23,7 @@ import {
   type FormValues,
   type NewResult,
 } from './item-form'
-import { CATEGORY_LABELS } from './shelf-view'
-
-const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
-const INPUT = `min-h-[44px] w-full rounded-xl border border-edge bg-surface px-3 text-base text-ink data-invalid:border-danger ${FOCUS}`
-const BUTTON = `inline-flex min-h-[44px] items-center justify-center rounded-xl border px-4 font-semibold ${FOCUS}`
-const SECONDARY = `${BUTTON} border-edge bg-surface text-ink hover:bg-surface-2`
-const DANGER = `${BUTTON} border-danger bg-surface text-danger hover:bg-surface-2`
+import { BUTTON, CATEGORY_OPTIONS, DANGER, Field, FieldSelect, SECONDARY } from './fields'
 
 const OVERLAY = 'fixed inset-0 z-20 grid place-items-center overflow-y-auto bg-bg/80 p-4'
 const PANEL = 'w-full rounded-3xl border border-line bg-surface p-5 md:p-6'
@@ -61,112 +37,6 @@ export type EditorTarget =
       category?: Category
       group?: Group
     }
-
-interface FieldProps {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  error?: string
-  description?: ReactNode
-  inputRef?: RefObject<HTMLInputElement | null>
-  type?: 'text' | 'date'
-  inputMode?: 'numeric'
-  maxLength?: number
-  autoFocus?: boolean
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  error,
-  description,
-  inputRef,
-  type,
-  inputMode,
-  maxLength,
-  autoFocus,
-}: FieldProps) {
-  return (
-    <TextField
-      value={value}
-      onChange={onChange}
-      isInvalid={error !== undefined}
-      validationBehavior="aria"
-      className="flex flex-col gap-1"
-    >
-      <Label className="text-sm font-semibold">{label}</Label>
-      <Input
-        ref={inputRef}
-        type={type ?? 'text'}
-        inputMode={inputMode}
-        maxLength={maxLength}
-        autoFocus={autoFocus}
-        autoComplete="off"
-        className={INPUT}
-      />
-      {description && (
-        <Text slot="description" className="text-sm text-muted">
-          {description}
-        </Text>
-      )}
-      <FieldError className="text-sm font-semibold text-danger">{error}</FieldError>
-    </TextField>
-  )
-}
-
-function FieldSelect<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  value: T
-  options: readonly { id: T; label: string }[]
-  onChange: (value: T) => void
-}) {
-  return (
-    <Select
-      value={value}
-      onChange={(key: Key | null) => {
-        if (key !== null) onChange(String(key) as T)
-      }}
-      className="flex flex-col gap-1"
-    >
-      <Label className="text-sm font-semibold">{label}</Label>
-      <Button className={`${INPUT} flex items-center justify-between gap-2 text-left`}>
-        <SelectValue className="truncate" />
-        <svg
-          viewBox="0 0 16 16"
-          width="14"
-          height="14"
-          aria-hidden="true"
-          className="flex-none fill-none stroke-current [stroke-width:1.8] [stroke-linecap:round]"
-        >
-          <path d="M4 6l4 4 4-4" />
-        </svg>
-      </Button>
-      <Popover className="min-w-(--trigger-width) rounded-xl border border-line bg-surface p-1 shadow-lg">
-        <ListBox items={options} className="max-h-72 overflow-auto outline-none">
-          {(option) => (
-            <ListBoxItem
-              id={option.id}
-              className="flex min-h-[44px] cursor-default items-center rounded-lg px-3 outline-none data-focused:bg-surface-2 data-selected:font-semibold"
-            >
-              {option.label}
-            </ListBoxItem>
-          )}
-        </ListBox>
-      </Popover>
-    </Select>
-  )
-}
-
-const CATEGORY_OPTIONS = CATEGORIES.map((category) => ({
-  id: category,
-  label: CATEGORY_LABELS[category],
-}))
 
 function ConfirmDelete({
   name,

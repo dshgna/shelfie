@@ -9,6 +9,7 @@ import { routineFor } from '../domain/routine'
 import { needsExpiry, needsRestock } from '../domain/status'
 import type { ItemRepository } from '../storage/repository'
 import { Filters, NO_FILTERS, type FilterState, type ShowFilter } from './Filters'
+import { FillDialog } from './fill/FillDialog'
 import { Header } from './Header'
 import { ItemEditor, type EditorTarget } from './ItemEditor'
 import { Leaves } from './Leaves'
@@ -71,6 +72,7 @@ export function AppShell({ repository, householdId }: AppShellProps) {
   const [page, setPage] = useState<Page>('inventory')
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null)
   const [focusItemId, setFocusItemId] = useState<string | null>(null)
+  const [fillOpen, setFillOpen] = useState(false)
   // Kept here, not in the tab, so ticks and numbers survive switching tabs (as in the prototype).
   const [shopping, setShopping] = useState<ShoppingState>({ buy: {}, checked: new Set() })
 
@@ -145,7 +147,12 @@ export function AppShell({ repository, householdId }: AppShellProps) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-[70rem] flex-col gap-3.5 px-4 pt-3.5 pb-14 md:gap-5 md:px-8 md:pt-8">
       <Leaves />
-      <Header query={query} onQueryChange={setQuery} onShopNow={() => setPage('shopping')} />
+      <Header
+        query={query}
+        onQueryChange={setQuery}
+        onShopNow={() => setPage('shopping')}
+        onFill={() => setFillOpen(true)}
+      />
       <main className="flex flex-col gap-3.5 md:gap-5">
         <StatsHeader
           total={items.length}
@@ -268,6 +275,19 @@ export function AppShell({ repository, householdId }: AppShellProps) {
           </TabPanel>
         </Tabs>
       </main>
+      {fillOpen && (
+        <FillDialog
+          repository={repository}
+          items={items}
+          householdId={householdId}
+          today={today}
+          onClose={() => setFillOpen(false)}
+          onAddEach={() => {
+            setFillOpen(false)
+            setEditorTarget({ kind: 'add', householdId })
+          }}
+        />
+      )}
       {editorTarget && (
         <ItemEditor
           key={editorTarget.kind === 'edit' ? editorTarget.item.id : 'new'}

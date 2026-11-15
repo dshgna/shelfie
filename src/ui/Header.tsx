@@ -43,9 +43,10 @@ interface HeaderProps {
   query: string
   onQueryChange: (query: string) => void
   onShopNow: () => void
+  onFill: () => void
 }
 
-export function Header({ query, onQueryChange, onShopNow }: HeaderProps) {
+export function Header({ query, onQueryChange, onShopNow, onFill }: HeaderProps) {
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
       <div className="mr-auto flex items-center gap-2 md:gap-2.5">
@@ -78,7 +79,7 @@ export function Header({ query, onQueryChange, onShopNow }: HeaderProps) {
           className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
         />
       </SearchField>
-      <MainActions onShopNow={onShopNow} />
+      <MainActions onFill={onFill} onShopNow={onShopNow} />
     </header>
   )
 }
