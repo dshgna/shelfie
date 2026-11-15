@@ -36,7 +36,7 @@ function isWholeNumber(value: number): boolean {
   return Number.isInteger(value) && value >= 0
 }
 
-function hasLife(item: Item): boolean {
+function hasLife(item: Omit<Item, 'updatedAt'>): boolean {
   return item.lifeDays !== undefined && item.lifeDays > 0
 }
 
@@ -50,7 +50,7 @@ export function isValidShare(share: number): boolean {
 }
 
 /** The prototype keeps a start date only while there is a lifetime and something in stock. */
-function shouldClearStart(item: Item): boolean {
+function shouldClearStart(item: Omit<Item, 'updatedAt'>): boolean {
   return !hasLife(item) || !(item.quantity > 0)
 }
 
@@ -114,11 +114,15 @@ export function isSafeLink(url: string): LinkCheck {
   return { ok: true, insecure: lowerScheme === 'http' }
 }
 
-/** Lists every rule the item breaks. Never changes the item. An empty list means it is valid. */
-export function validateItem(item: Item): ValidationIssue[] {
+/**
+ * Lists every rule the item breaks. Never changes the item. An empty list means it is valid.
+ * Runs before saving, so the item needn't have `updatedAt` yet (the repository sets it).
+ */
+export function validateItem(item: Omit<Item, 'updatedAt'>): ValidationIssue[] {
   const issues: ValidationIssue[] = []
 
-  // Every date field on Item. The date helpers in dates.ts throw on bad dates, so catch them here.
+  // Every calendar-date field on Item (updatedAt is set by the repository, so it isn't checked
+  // here). The date helpers in dates.ts throw on bad dates, so catch them here.
   const dates: Array<['startedOn' | 'expiresOn', string | undefined]> = [
     ['startedOn', item.startedOn],
     ['expiresOn', item.expiresOn],
@@ -201,11 +205,12 @@ export function validateItem(item: Item): ValidationIssue[] {
 /**
  * Returns a corrected copy of the item. The only correction is the prototype's rule:
  * the start date is cleared when there is no lifetime or nothing in stock.
- * The item passed in is never changed.
+ * The item passed in is never changed. Runs before saving, so the item needn't have `updatedAt`
+ * yet; the result has the same type as the item passed in (an Item stays an Item).
  */
-export function normalizeItem(item: Item): Item {
+export function normalizeItem<T extends Omit<Item, 'updatedAt'>>(item: T): T {
   // Copy the nested objects too, so changing the result can never reach the original.
-  const copy: Item = { ...item, reorder: { ...item.reorder }, links: { ...item.links } }
+  const copy: T = { ...item, reorder: { ...item.reorder }, links: { ...item.links } }
   if (shouldClearStart(item)) delete copy.startedOn
   return copy
 }

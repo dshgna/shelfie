@@ -4,16 +4,30 @@ import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 
 // src/storage is the only place that may use IndexedDB, so Dexie and the in-memory IndexedDB the
-// storage tests use are banned everywhere else under src/, test files included.
+// storage tests use are banned everywhere else in the repo (e2e/ and config files included), test
+// files included.
+const INDEXEDDB_MESSAGE = 'Only src/storage may use IndexedDB.'
 const indexedDbPackages = ['dexie', 'fake-indexeddb'].map((name) => ({
   regex: `^${name}(/|$)`,
-  message: 'Only src/storage may use IndexedDB.',
+  message: INDEXEDDB_MESSAGE,
 }))
 
+// no-restricted-imports sees only static imports and re-exports, so dynamic import('dexie') and
+// require('dexie') are caught here. The domain block below sets its own no-restricted-syntax,
+// which replaces this one for src/domain, so it repeats these.
+const INDEXEDDB_SOURCE = '/^(dexie|fake-indexeddb)(\\/|$)/'
+const indexedDbDynamicImports = [
+  `ImportExpression[source.value=${INDEXEDDB_SOURCE}]`,
+  `CallExpression[callee.name='require'][arguments.0.value=${INDEXEDDB_SOURCE}]`,
+].map((selector) => ({ selector, message: INDEXEDDB_MESSAGE }))
+
 const indexedDbBlock = {
-  files: ['src/**/*.{ts,tsx}'],
+  files: ['**/*.{ts,tsx}'],
   ignores: ['src/storage/**'],
-  rules: { 'no-restricted-imports': ['error', { patterns: indexedDbPackages }] },
+  rules: {
+    'no-restricted-imports': ['error', { patterns: indexedDbPackages }],
+    'no-restricted-syntax': ['error', ...indexedDbDynamicImports],
+  },
 }
 
 // src/domain holds pure rules: no UI, storage, network or app code. See src/domain/README.md.
@@ -113,7 +127,7 @@ export default tseslint.config(
     files: ['src/domain/**/*.ts'],
     rules: {
       'no-restricted-globals': ['error', ...domainBannedGlobals],
-      'no-restricted-syntax': ['error', ...domainBannedSyntax],
+      'no-restricted-syntax': ['error', ...domainBannedSyntax, ...indexedDbDynamicImports],
     },
   },
 )

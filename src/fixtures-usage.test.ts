@@ -1,5 +1,6 @@
 // Guards the shared test data: src/domain/testing/ (the domain tests and their helpers) may only
-// be imported by test files, so it can never end up in the app bundle. Lives outside src/domain
+// be imported by test code (test files, and the helpers in src/domain/testing/ and
+// src/storage/testing/), so it can never end up in the app bundle. Lives outside src/domain
 // because it reads files (node:fs), which domain code may not do.
 
 import { readFileSync, readdirSync } from 'node:fs'
@@ -8,6 +9,8 @@ import { describe, expect, it } from 'vitest'
 
 const SRC = new URL('.', import.meta.url).pathname
 const TESTING_DIR = join(SRC, 'domain', 'testing')
+// Test helpers that aren't *.test.ts files themselves, such as the repository contract.
+const TEST_CODE_DIRS = [TESTING_DIR, join(SRC, 'storage', 'testing')]
 // An import of anything in testing/ from outside it ('../domain/testing/helpers/fixtures'), or of
 // the fixtures from the tests next to them ('./helpers/fixtures').
 const IMPORT_OF_TESTING = /from\s+['"][^'"]*(\/testing(\/[^'"]*)?|\/helpers\/fixtures)['"]/
@@ -23,7 +26,8 @@ function sourceFiles(dir: string): string[] {
 describe('test fixtures', () => {
   it('are imported only by test files', () => {
     const offenders = sourceFiles(SRC)
-      .filter((file) => !/\.test\.tsx?$/.test(file) && !file.startsWith(TESTING_DIR))
+      .filter((file) => !/\.test\.tsx?$/.test(file))
+      .filter((file) => !TEST_CODE_DIRS.some((dir) => file.startsWith(dir + '/')))
       .filter((file) => IMPORT_OF_TESTING.test(readFileSync(file, 'utf8')))
       .map((file) => relative(SRC, file))
     expect(offenders).toEqual([])

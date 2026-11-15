@@ -24,7 +24,7 @@
 // - the prototype's 'basics' category becomes 'household', keeping its group (owner's decision,
 //   14 Nov 2026), and the legacy `full` field is dropped.
 
-import { InvalidDateError, isValidIsoDate } from './dates'
+import { InvalidDateError, isValidIsoDate, isValidIsoDateTime, type IsoDateTime } from './dates'
 import {
   CATEGORIES,
   CURRENT_SCHEMA_VERSION,
@@ -102,6 +102,8 @@ export interface MigrationContext {
   today: IsoDate
   /** The household that prototype items are given, since the prototype has no households. */
   householdId: string
+  /** The updatedAt that prototype items are given, since the prototype keeps no timestamps. */
+  now: IsoDateTime
 }
 
 /** One item that made it to the current version. */
@@ -446,10 +448,10 @@ function linksFrom(item: Fields): ItemLinks {
 /**
  * Renames prototype v6 fields to Shelfie's and fills in what old items may lack.
  * Required (every prototype version wrote them): id, name, cat, qty, unit, min, par.
- * householdId comes from the context. Defaults for fields added later or left empty: brand, loc,
- * size, note → ''; sub → 'Other'; unit '' → 'unit' (both as the prototype's form does);
- * example → false; deleted → false (the prototype erases removed items); life 0 or missing,
- * start, expiry, link and blink '' or missing → left out. `v`, `full` and unknown fields are dropped.
+ * householdId and updatedAt come from the context. Defaults for fields added later or left
+ * empty: brand, loc, size, note → ''; sub → 'Other'; unit '' → 'unit' (both as the prototype's
+ * form does); example → false; deleted → false (the prototype erases removed items); life 0 or
+ * missing, start, expiry, link and blink '' or missing → left out. `v`, `full` and unknown fields are dropped.
  */
 function prototypeToSchema1(input: unknown, context: MigrationContext): unknown {
   const item = asFields(input)
@@ -462,6 +464,7 @@ function prototypeToSchema1(input: unknown, context: MigrationContext): unknown 
     schemaVersion: 1,
     id,
     householdId: context.householdId,
+    updatedAt: context.now,
     name: requiredText(item, 'name'),
     brand: optionalText(item, 'brand', ''),
     category: categoryFrom(requiredText(item, 'cat')),
@@ -662,6 +665,10 @@ function readCurrentItem(input: unknown): Item {
   if (typeof isExample !== 'boolean') throw badField('isExample', 'true or false')
   const deleted = item.deleted
   if (typeof deleted !== 'boolean') throw badField('deleted', 'true or false')
+  const updatedAt = item.updatedAt
+  if (typeof updatedAt !== 'string' || !isValidIsoDateTime(updatedAt)) {
+    throw badField('updatedAt', 'a date and time such as 2026-11-15T09:30:00.000Z')
+  }
 
   const result: Item = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -681,6 +688,7 @@ function readCurrentItem(input: unknown): Item {
     links: readLinks(item.links),
     isExample,
     deleted,
+    updatedAt,
   }
   const lifeDays = item.lifeDays === undefined ? undefined : requiredNumber(item, 'lifeDays')
   const startedOn = optionalDate(item, 'startedOn')

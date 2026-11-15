@@ -64,6 +64,21 @@ describe('item queries', () => {
     expect(ids.sort()).toEqual(['a', 'c'])
   })
 
+  it('indexes items on householdId, [category+group] and updatedAt', () => {
+    const indexes = db.items.schema.indexes.map((index) => index.name).sort()
+    expect(indexes).toEqual(['[category+group]', 'householdId', 'updatedAt'])
+  })
+
+  it('lists items in updatedAt order', async () => {
+    await db.items.bulkPut([
+      makeItem({ id: 'middle', updatedAt: '2026-11-14T10:00:00.000Z' }),
+      makeItem({ id: 'latest', updatedAt: '2026-11-14T11:00:00.000Z' }),
+      makeItem({ id: 'earliest', updatedAt: '2026-11-14T09:00:00.000Z' }),
+    ])
+    const ids = await db.items.orderBy('updatedAt').primaryKeys()
+    expect(ids).toEqual(['earliest', 'middle', 'latest'])
+  })
+
   it('finds items by [category+group]', async () => {
     await db.items.bulkPut([
       makeItem({ id: 'paste', category: 'dental', group: 'Dental Care' }),

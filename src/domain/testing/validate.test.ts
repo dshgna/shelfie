@@ -18,6 +18,13 @@ describe('validateItem', () => {
     expect(validateItem(makeItem())).toEqual([])
   })
 
+  it('accepts an item with no updatedAt yet (the repository sets it on save)', () => {
+    const unsaved: Omit<Item, 'updatedAt'> & { updatedAt?: string } = makeItem()
+    delete unsaved.updatedAt
+    expect('updatedAt' in unsaved).toBe(false)
+    expect(validateItem(unsaved)).toEqual([])
+  })
+
   describe('start date', () => {
     it.each([
       { case: 'lifetime and stock', lifeDays: 60, quantity: 1, expected: [] },

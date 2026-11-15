@@ -32,6 +32,7 @@ const soap = {
   isExample: false,
   householdId: 'test-household',
   deleted: false,
+  updatedAt: '2026-11-15T09:30:00.000Z',
 } satisfies Item
 
 // A minimal item: everything optional left out.
@@ -53,6 +54,7 @@ const sponges = {
   isExample: true,
   householdId: 'test-household',
   deleted: false,
+  updatedAt: '2026-11-15T09:30:00.000Z',
 } satisfies Item
 
 describe('Item type', () => {

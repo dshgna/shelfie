@@ -17,7 +17,8 @@ import {
 // Invented example data, not anyone's real inventory.
 
 const TODAY = '2026-11-14'
-const context = { today: TODAY, householdId: 'test-household' }
+const NOW = '2026-11-14T09:30:00.000Z'
+const context = { today: TODAY, householdId: 'test-household', now: NOW }
 
 type Raw = Record<string, unknown>
 
@@ -70,6 +71,7 @@ function currentItem(overrides: Partial<Item> = {}): Item {
     isExample: false,
     householdId: 'test-household',
     deleted: false,
+    updatedAt: NOW,
     ...overrides,
   }
 }
@@ -497,6 +499,7 @@ const stepCases: StepCase[] = [
       isExample: false,
       householdId: 'test-household',
       deleted: false,
+      updatedAt: NOW,
     } satisfies Item,
   },
   {
@@ -534,6 +537,7 @@ const stepCases: StepCase[] = [
       isExample: false,
       householdId: 'test-household',
       deleted: false,
+      updatedAt: NOW,
     } satisfies Item,
   },
   {
@@ -738,6 +742,7 @@ describe('migrateToCurrent', () => {
             isExample: false,
             householdId: 'test-household',
             deleted: false,
+            updatedAt: NOW,
           },
         },
         {
@@ -764,6 +769,7 @@ describe('migrateToCurrent', () => {
             isExample: false,
             householdId: 'test-household',
             deleted: false,
+            updatedAt: NOW,
           },
         },
       ],
@@ -1000,6 +1006,16 @@ describe('migrateToCurrent', () => {
         'bad-field',
       ],
       ['a current item missing deleted', [{ ...currentItem(), deleted: undefined }], 'bad-field'],
+      [
+        'a current item missing updatedAt',
+        [{ ...currentItem(), updatedAt: undefined }],
+        'bad-field',
+      ],
+      [
+        'a current item with an invalid updatedAt',
+        [{ ...currentItem(), updatedAt: '2026-02-30T09:30:00.000Z' }],
+        'bad-field',
+      ],
       ['a current item with deleted as text', [{ ...currentItem(), deleted: 'no' }], 'bad-field'],
       ['two items with the same id', [currentItem(), currentItem()], 'duplicate-id'],
     ])('%s', (_label, input, code) => {
@@ -1022,13 +1038,19 @@ describe('migrateToCurrent', () => {
   })
 
   it("gives prototype items the context's householdId", () => {
-    const result = migrateToCurrent([v6Item()], { today: TODAY, householdId: 'other-household' })
+    const result = migrateToCurrent([v6Item()], { ...context, householdId: 'other-household' })
     expect(result.items.map((entry) => entry.item.householdId)).toEqual(['other-household'])
   })
 
+  it("gives prototype items the context's now as updatedAt", () => {
+    const now = '2026-11-15T18:45:00.000Z'
+    const result = migrateToCurrent([v6Item()], { ...context, now })
+    expect(result.items.map((entry) => entry.item.updatedAt)).toEqual([now])
+  })
+
   it('throws InvalidDateError for an invalid today (a caller bug, not bad data)', () => {
-    expect(() =>
-      migrateToCurrent([], { today: '14/11/2026', householdId: 'test-household' }),
-    ).toThrow(InvalidDateError)
+    expect(() => migrateToCurrent([], { ...context, today: '14/11/2026' })).toThrow(
+      InvalidDateError,
+    )
   })
 })

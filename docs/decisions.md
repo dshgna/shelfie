@@ -4,6 +4,12 @@ Newest first. One line per decision, with the reason.
 
 ## 15 Nov 2026
 
+- **`ItemRepository.put` refuses to move an item between households, and `subscribe` only hears its own repository object.** A `put` whose id is already stored (even deleted) in another household rejects with `ItemHouseholdMismatchError` and writes nothing, so a bug or a bad import can't silently take an item from one household into another. Listeners hear only writes through the same repository object, so the app creates one and shares it; other repositories and other tabs will need Dexie's liveQuery or a BroadcastChannel later.
+
+- **The UI reads and writes items only through `ItemRepository`.** One interface with an in-memory and a Dexie version that behave identically (one shared contract test), so the UI can be built before the database is wired in and storage can change without touching it. Rules: `put` stamps `updatedAt` from the clock; `remove` marks the item `deleted` instead of erasing it; `list` and `get` hide deleted items; objects are copied in and out; listeners run only after the write has committed.
+
+- **Items carry `updatedAt` again, stamped by the repository on every save; still no `createdAt`.** Sync and conflict resolution need it to tell which copy of an item is newer and what changed since the last sync. Prototype items get the migration context's `now`. schemaVersion 1 and Dexie version 1 were changed in place, as no real data exists yet. This reverses the `updatedAt` part of the entry below.
+
 - **`Purchase` is merged into `ItemPurchaseRecord`.** They described the same thing, so `calcStock` now takes the record's fields (`quantity`, `size`, `unit`, an optional `boughtAt` that defaults to today) plus the item's `name`, `category` and optional `lifeDays`, and rejects a quantity of 0. Import drafts use the same names (`quantity`, `boughtAt`), so the review can show the estimate before anything is saved.
 
 - **`deleted` is on `Item`; `ItemPurchaseRecord` is one row per purchase; schemaVersion 1 and Dexie version 1 were changed in place.** Items carry `householdId` (prototype items get it from the migration context) but no longer createdAt or updatedAt, and the new `itemPurchaseRecords` table holds each purchase, ordered by `addedAt`. No real data existed yet, so neither version was bumped; from now on any change bumps them and adds a migration.

@@ -2,7 +2,7 @@
 // Ported from the prototype's item shape (version `v: 6`). Prototype field names are noted
 // beside each field so the prototype importer (a later item) can map them.
 
-import type { IsoDate } from './dates'
+import type { IsoDate, IsoDateTime } from './dates'
 
 /** IsoDate lives in dates.ts; re-exported so existing `import { IsoDate } from './item'` works. */
 export type { IsoDate }
@@ -198,4 +198,9 @@ export interface Item {
    * would look the same as one they haven't received yet.
    */
   deleted: boolean
+  /**
+   * When the item was last saved, in UTC. The repository sets it on every save; sync uses it to
+   * tell which copy of an item is newer and what changed since the last sync.
+   */
+  updatedAt: IsoDateTime
 }

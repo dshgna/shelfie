@@ -41,6 +41,7 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     isExample: false,
     householdId: 'test-household',
     deleted: false,
+    updatedAt: NOW,
     ...overrides,
   }
 }

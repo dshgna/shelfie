@@ -14,8 +14,8 @@
 //   row would silently drop out of such an index. To get the items that are not deleted, load
 //   them by householdId and filter in memory.
 // - IndexedDB also leaves a row out of an index when the indexed field is missing. Every indexed
-//   field below is required by its type (`category`, `group`, `itemId` and `addedAt` included),
-//   so no row drops out.
+//   field below is required by its type (`householdId`, `category`, `group` and `updatedAt` on
+//   items; `itemId` and `addedAt` on purchase records), so no row drops out.
 
 import Dexie, { type Table } from 'dexie'
 import type { Household } from '../domain/household'
@@ -35,7 +35,7 @@ export class ShelfieDB extends Dexie {
     this.version(1).stores({
       users: 'id, householdId',
       households: 'id',
-      items: 'id, householdId, [category+group]',
+      items: 'id, householdId, [category+group], updatedAt',
       // itemId finds every purchase of one item; addedAt lists them in the order they were added.
       itemPurchaseRecords: 'id, itemId, addedAt',
     })
