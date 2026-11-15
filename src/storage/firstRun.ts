@@ -1,14 +1,12 @@
 // Makes sure this device has a local profile: one household and one user who belongs to it.
 
-import type { IsoDateTime } from '../domain/dates'
-import { defaultHouseholdPrefs, type Household } from '../domain/household'
-import { CURRENT_SCHEMA_VERSION } from '../domain/item'
-import { defaultUserPrefs, type User } from '../domain/user'
+import { newHousehold, type Household } from '../domain/household'
+import { newUser, type User } from '../domain/user'
 import type { ShelfieDB } from './db'
 
 export interface FirstRunDeps {
-  /** The current moment. The app passes `() => new Date().toISOString()`. */
-  now: () => IsoDateTime
+  /** The current moment. The app passes `() => new Date()`. */
+  now: () => Date
   /** A new unique id. The app passes `() => crypto.randomUUID()`. */
   newId: () => string
 }
@@ -35,21 +33,9 @@ export async function ensureLocalProfile(
       return { user: existing, household }
     }
 
-    const createdAt = deps.now()
-    const household: Household = {
-      id: deps.newId(),
-      createdAt,
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      householdPrefs: defaultHouseholdPrefs(),
-    }
-    const user: User = {
-      id: deps.newId(),
-      householdId: household.id,
-      createdAt,
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      userPrefs: defaultUserPrefs(),
-      syncOn: false,
-    }
+    const now = deps.now()
+    const household = newHousehold({ id: deps.newId(), now })
+    const user = newUser({ id: deps.newId(), householdId: household.id, now })
     await db.households.add(household)
     await db.users.add(user)
     return { user, household }

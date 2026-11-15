@@ -3,7 +3,8 @@
 // norm, titleCase and cleanDate. Rules only: nothing here calls a network or a model.
 //
 // A draft is one line of a purchase as the import review shows it, not an Item: it has a count
-// bought and a purchase date, not a quantity in stock. It fits calcStock's Purchase as it is.
+// bought (`quantity`) and a purchase date (`boughtAt`), not a quantity in stock, named as on
+// ItemPurchaseRecord so the review can show calcStock's estimate before anything is saved.
 // The importer later turns a draft plus its StockEstimate into a new Item or a top-up.
 //
 // Behaviour matches the prototype, oddities included; they are noted where they happen.
@@ -98,12 +99,12 @@ export interface ImportDraft {
    */
   unit: Unit
   /** Units bought: a whole number, 1 or more. Above 99 comes with a 'count-large' warning. */
-  count: number
+  quantity: number
   /**
    * Always a date, so the review's date picker starts filled in. Today when the row has no date
    * or an unusable one (the prototype stored '' and calcStock then used today, so stock is the same).
    */
-  boughtOn: IsoDate
+  boughtAt: IsoDate
   /** '' when not known. */
   shop: string
   category: Category
@@ -309,17 +310,17 @@ function readCount(value: unknown, issues: Issues): number {
   if (count !== parsed) {
     addIssue(
       issues,
-      'count',
+      'quantity',
       'count-adjusted',
       `The number bought must be a whole number, ${MIN_COUNT} or more, so it was set to ${count}.`,
     )
   } else if (isString(value) && !WHOLE_NUMBER_TEXT.test(value)) {
-    addIssue(issues, 'count', 'count-adjusted', `“${value}” was read as ${count}.`)
+    addIssue(issues, 'quantity', 'count-adjusted', `“${value}” was read as ${count}.`)
   }
   if (count > EXPECTED_MAX_COUNT) {
     addIssue(
       issues,
-      'count',
+      'quantity',
       'count-large',
       `${count} is more than usual for one order line. Check the number is right.`,
       'warning',
@@ -337,7 +338,7 @@ function readDate(value: unknown, today: IsoDate, issues: Issues): IsoDate {
   if (!isString(value)) {
     addIssue(
       issues,
-      'boughtOn',
+      'boughtAt',
       'wrong-type',
       'The purchase date wasn’t text, so today’s date was used instead.',
     )
@@ -347,7 +348,7 @@ function readDate(value: unknown, today: IsoDate, issues: Issues): IsoDate {
   if (!isValidIsoDate(value)) {
     addIssue(
       issues,
-      'boughtOn',
+      'boughtAt',
       'invalid-date',
       `The purchase date (${value}) wasn’t a real date written as YYYY-MM-DD, so today’s date was used instead.`,
     )
@@ -357,7 +358,7 @@ function readDate(value: unknown, today: IsoDate, issues: Issues): IsoDate {
   if (value > today) {
     addIssue(
       issues,
-      'boughtOn',
+      'boughtAt',
       'date-in-future',
       `The purchase date (${value}) is in the future, so today’s date was used instead.`,
     )
@@ -366,7 +367,7 @@ function readDate(value: unknown, today: IsoDate, issues: Issues): IsoDate {
   if (value <= EARLIEST_DATE_EXCLUSIVE) {
     addIssue(
       issues,
-      'boughtOn',
+      'boughtAt',
       'date-too-old',
       `The purchase date (${value}) is before 2000, so today’s date was used instead.`,
     )
@@ -536,8 +537,8 @@ export function normRow(raw: unknown, today: IsoDate): NormRowResult {
     brand: readText(raw['brand'], 'brand', TEXT_LIMITS.brand, issues),
     size: readText(raw['size'], 'size', TEXT_LIMITS.size, issues),
     unit: readUnit(raw['unit'], issues),
-    count: readCount(raw['count'], issues),
-    boughtOn: readDate(raw['date'], today, issues),
+    quantity: readCount(raw['count'], issues),
+    boughtAt: readDate(raw['date'], today, issues),
     shop: readText(raw['shop'], 'shop', TEXT_LIMITS.shop, issues),
     category,
     group,

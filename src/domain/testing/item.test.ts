@@ -30,6 +30,8 @@ const soap = {
   notes: '',
   links: { product: 'https://example.com/lavender-soap' },
   isExample: false,
+  householdId: 'test-household',
+  deleted: false,
 } satisfies Item
 
 // A minimal item: everything optional left out.
@@ -49,6 +51,8 @@ const sponges = {
   notes: '',
   links: {},
   isExample: true,
+  householdId: 'test-household',
+  deleted: false,
 } satisfies Item
 
 describe('Item type', () => {
@@ -59,10 +63,12 @@ describe('Item type', () => {
 
   it('types the important fields', () => {
     expectTypeOf<Item['id']>().toEqualTypeOf<string>()
+    expectTypeOf<Item['householdId']>().toEqualTypeOf<string>()
     expectTypeOf<Item['schemaVersion']>().toEqualTypeOf<number>()
     expectTypeOf<Item['category']>().toEqualTypeOf<Category>()
     expectTypeOf<Item['unit']>().toEqualTypeOf<Unit>()
     expectTypeOf<Item['reorder']>().toEqualTypeOf<ReorderRule>()
+    expectTypeOf<Item['deleted']>().toEqualTypeOf<boolean>()
     // Optional fields may be missing, so their type includes undefined.
     expectTypeOf<Item['startedOn']>().toEqualTypeOf<IsoDate | undefined>()
     expectTypeOf<Item['expiresOn']>().toEqualTypeOf<IsoDate | undefined>()

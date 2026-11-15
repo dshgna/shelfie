@@ -1,6 +1,11 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { isValidIsoDateTime, type IsoDateTime } from '../dates'
-import { defaultHouseholdPrefs, type Household, type HouseholdPrefs } from '../household'
+import {
+  defaultHouseholdPrefs,
+  newHousehold,
+  type Household,
+  type HouseholdPrefs,
+} from '../household'
 import { CURRENT_SCHEMA_VERSION, type ReorderShare } from '../item'
 import { DEFAULT_SHARE } from '../status'
 import { makeHousehold } from './helpers/fixtures'
@@ -72,5 +77,29 @@ describe('HouseholdPrefs', () => {
     first.reorderDefaultShare = 0.5
     expect(defaultHouseholdPrefs().reorderDefaultShare).toBe(DEFAULT_SHARE)
     expect(defaultHouseholdPrefs()).not.toBe(defaultHouseholdPrefs())
+  })
+})
+
+describe('newHousehold', () => {
+  const now = new Date(Date.UTC(2026, 10, 15, 9, 30))
+
+  it('builds a household from the id and moment it is given', () => {
+    expect(newHousehold({ id: 'household-9', now })).toEqual({
+      id: 'household-9',
+      createdAt: '2026-11-15T09:30:00.000Z',
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      householdPrefs: { reorderDefaultShare: DEFAULT_SHARE },
+    })
+  })
+
+  it('writes createdAt as the exact ISO text, and leaves the name out', () => {
+    const household = newHousehold({ id: 'household-9', now })
+    expect(household.createdAt).toBe(now.toISOString())
+    expect(isValidIsoDateTime(household.createdAt)).toBe(true)
+    expect('name' in household).toBe(false)
+  })
+
+  it('throws for an Invalid Date', () => {
+    expect(() => newHousehold({ id: 'household-9', now: new Date('nope') })).toThrow(RangeError)
   })
 })

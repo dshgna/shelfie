@@ -2,7 +2,7 @@
 // Types only: storing it is the storage layer's job (src/storage, step 3).
 
 import type { IsoDateTime } from './dates'
-import type { ReorderShare } from './item'
+import { CURRENT_SCHEMA_VERSION, type ReorderShare } from './item'
 import { DEFAULT_SHARE } from './status'
 
 /**
@@ -30,4 +30,19 @@ export interface Household {
   /** The shape version this record was stored at. */
   schemaVersion: number
   householdPrefs: HouseholdPrefs
+}
+
+/**
+ * A new household with default preferences and no name. The caller passes the id and the current
+ * moment, because domain code never makes ids or reads the clock.
+ *
+ * @throws RangeError if `now` is an Invalid Date (from toISOString).
+ */
+export function newHousehold({ id, now }: { id: string; now: Date }): Household {
+  return {
+    id,
+    createdAt: now.toISOString(),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    householdPrefs: defaultHouseholdPrefs(),
+  }
 }

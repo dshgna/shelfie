@@ -100,6 +100,8 @@ export class MigrationError extends Error {
 export interface MigrationContext {
   /** Used where the prototype filled in today's date (a start date for prototype v4). */
   today: IsoDate
+  /** The household that prototype items are given, since the prototype has no households. */
+  householdId: string
 }
 
 /** One item that made it to the current version. */
@@ -444,11 +446,12 @@ function linksFrom(item: Fields): ItemLinks {
 /**
  * Renames prototype v6 fields to Shelfie's and fills in what old items may lack.
  * Required (every prototype version wrote them): id, name, cat, qty, unit, min, par.
- * Defaults for fields added later or left empty: brand, loc, size, note → ''; sub → 'Other';
- * unit '' → 'unit' (both as the prototype's form does); example → false; life 0 or missing,
+ * householdId comes from the context. Defaults for fields added later or left empty: brand, loc,
+ * size, note → ''; sub → 'Other'; unit '' → 'unit' (both as the prototype's form does);
+ * example → false; deleted → false (the prototype erases removed items); life 0 or missing,
  * start, expiry, link and blink '' or missing → left out. `v`, `full` and unknown fields are dropped.
  */
-function prototypeToSchema1(input: unknown): unknown {
+function prototypeToSchema1(input: unknown, context: MigrationContext): unknown {
   const item = asFields(input)
   const id = requiredText(item, 'id')
   if (id === '') throw badField('id', 'non-empty text')
@@ -458,6 +461,7 @@ function prototypeToSchema1(input: unknown): unknown {
   const next: Item = {
     schemaVersion: 1,
     id,
+    householdId: context.householdId,
     name: requiredText(item, 'name'),
     brand: optionalText(item, 'brand', ''),
     category: categoryFrom(requiredText(item, 'cat')),
@@ -471,6 +475,7 @@ function prototypeToSchema1(input: unknown): unknown {
     notes: optionalText(item, 'note', ''),
     links: linksFrom(item),
     isExample: optionalBoolean(item, 'example', false),
+    deleted: false,
   }
   const startedOn = nonEmptyText(item, 'start')
   const expiresOn = nonEmptyText(item, 'expiry')
@@ -649,14 +654,19 @@ function readCurrentItem(input: unknown): Item {
   }
   const id = requiredText(item, 'id')
   if (id === '') throw badField('id', 'non-empty text')
+  const householdId = requiredText(item, 'householdId')
+  if (householdId === '') throw badField('householdId', 'non-empty text')
   const category = item.category
   if (!isCategory(category)) throw badField('category', `one of ${CATEGORIES.join(', ')}`)
   const isExample = item.isExample
   if (typeof isExample !== 'boolean') throw badField('isExample', 'true or false')
+  const deleted = item.deleted
+  if (typeof deleted !== 'boolean') throw badField('deleted', 'true or false')
 
   const result: Item = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     id,
+    householdId,
     name: requiredText(item, 'name'),
     brand: requiredText(item, 'brand'),
     category,
@@ -670,6 +680,7 @@ function readCurrentItem(input: unknown): Item {
     notes: requiredText(item, 'notes'),
     links: readLinks(item.links),
     isExample,
+    deleted,
   }
   const lifeDays = item.lifeDays === undefined ? undefined : requiredNumber(item, 'lifeDays')
   const startedOn = optionalDate(item, 'startedOn')

@@ -155,6 +155,8 @@ export interface Item {
   schemaVersion: number
   /** Unique within the person's inventory. */
   id: string
+  /** The household the item belongs to. */
+  householdId: string
   name: string
   /** '' when not known. */
   brand: string
@@ -190,4 +192,10 @@ export interface Item {
   links: ItemLinks
   /** True for the example items the app adds for new users, so they can be removed in one go. */
   isExample: boolean
+  /**
+   * True when the item has been removed. The item is kept, marked instead of erased, so that
+   * other devices can learn it is gone the next time they sync; an item that simply disappeared
+   * would look the same as one they haven't received yet.
+   */
+  deleted: boolean
 }

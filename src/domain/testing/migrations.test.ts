@@ -17,7 +17,7 @@ import {
 // Invented example data, not anyone's real inventory.
 
 const TODAY = '2026-11-14'
-const context = { today: TODAY }
+const context = { today: TODAY, householdId: 'test-household' }
 
 type Raw = Record<string, unknown>
 
@@ -68,6 +68,8 @@ function currentItem(overrides: Partial<Item> = {}): Item {
     notes: '',
     links: { product: 'https://shop.example/rosemary' },
     isExample: false,
+    householdId: 'test-household',
+    deleted: false,
     ...overrides,
   }
 }
@@ -493,6 +495,8 @@ const stepCases: StepCase[] = [
       notes: 'Sulphate free',
       links: { product: 'https://shop.example/cedar', brand: 'https://shop.example/examplehill' },
       isExample: false,
+      householdId: 'test-household',
+      deleted: false,
     } satisfies Item,
   },
   {
@@ -528,6 +532,8 @@ const stepCases: StepCase[] = [
       notes: '',
       links: {},
       isExample: false,
+      householdId: 'test-household',
+      deleted: false,
     } satisfies Item,
   },
   {
@@ -730,6 +736,8 @@ describe('migrateToCurrent', () => {
             notes: '',
             links: {},
             isExample: false,
+            householdId: 'test-household',
+            deleted: false,
           },
         },
         {
@@ -754,6 +762,8 @@ describe('migrateToCurrent', () => {
             notes: '',
             links: {},
             isExample: false,
+            householdId: 'test-household',
+            deleted: false,
           },
         },
       ],
@@ -984,6 +994,13 @@ describe('migrateToCurrent', () => {
       ['an unknown category', [v6Item({ cat: 'garden' })], 'bad-field'],
       ['a share written as text', [v6Item({ pct: '50%' })], 'bad-field'],
       ['a current item missing its links', [{ ...currentItem(), links: undefined }], 'bad-field'],
+      [
+        'a current item missing householdId',
+        [{ ...currentItem(), householdId: undefined }],
+        'bad-field',
+      ],
+      ['a current item missing deleted', [{ ...currentItem(), deleted: undefined }], 'bad-field'],
+      ['a current item with deleted as text', [{ ...currentItem(), deleted: 'no' }], 'bad-field'],
       ['two items with the same id', [currentItem(), currentItem()], 'duplicate-id'],
     ])('%s', (_label, input, code) => {
       expectMigrationError(() => migrateToCurrent(input, context), code)
@@ -1004,7 +1021,14 @@ describe('migrateToCurrent', () => {
     })
   })
 
+  it("gives prototype items the context's householdId", () => {
+    const result = migrateToCurrent([v6Item()], { today: TODAY, householdId: 'other-household' })
+    expect(result.items.map((entry) => entry.item.householdId)).toEqual(['other-household'])
+  })
+
   it('throws InvalidDateError for an invalid today (a caller bug, not bad data)', () => {
-    expect(() => migrateToCurrent([], { today: '14/11/2026' })).toThrow(InvalidDateError)
+    expect(() =>
+      migrateToCurrent([], { today: '14/11/2026', householdId: 'test-household' }),
+    ).toThrow(InvalidDateError)
   })
 })

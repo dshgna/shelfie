@@ -4,6 +4,10 @@ Newest first. One line per decision, with the reason.
 
 ## 15 Nov 2026
 
+- **`Purchase` is merged into `ItemPurchaseRecord`.** They described the same thing, so `calcStock` now takes the record's fields (`quantity`, `size`, `unit`, an optional `boughtAt` that defaults to today) plus the item's `name`, `category` and optional `lifeDays`, and rejects a quantity of 0. Import drafts use the same names (`quantity`, `boughtAt`), so the review can show the estimate before anything is saved.
+
+- **`deleted` is on `Item`; `ItemPurchaseRecord` is one row per purchase; schemaVersion 1 and Dexie version 1 were changed in place.** Items carry `householdId` (prototype items get it from the migration context) but no longer createdAt or updatedAt, and the new `itemPurchaseRecords` table holds each purchase, ordered by `addedAt`. No real data existed yet, so neither version was bumped; from now on any change bumps them and adds a migration.
+
 - **Domain tests live in `src/domain/testing/`, not beside each module; shared test data in `testing/helpers/`.** Keeps the rule modules and the tests apart. The three tests in `src/` that read files (design tokens, fixture usage, security headers) stay in `src/`, outside the domain's fences.
 
 ## 14 Nov 2026

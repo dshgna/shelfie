@@ -8,6 +8,7 @@
 // device needs them to derive the same key again and to tell whether a passphrase is right.
 
 import type { IsoDateTime } from './dates'
+import { CURRENT_SCHEMA_VERSION } from './item'
 
 /** The theme choice. 'system' follows the device's light or dark setting. */
 export type Theme = 'system' | 'light' | 'dark'
@@ -61,4 +62,30 @@ export interface User {
   keyCheck?: string
   /** When this device last finished a sync, in UTC. Left out if it never has. */
   lastSyncAt?: IsoDateTime
+}
+
+/**
+ * A new user in `householdId`, with default preferences and sync off (so no key fields). The
+ * caller passes the id and the current moment, because domain code never makes ids or reads the
+ * clock.
+ *
+ * @throws RangeError if `now` is an Invalid Date (from toISOString).
+ */
+export function newUser({
+  id,
+  householdId,
+  now,
+}: {
+  id: string
+  householdId: string
+  now: Date
+}): User {
+  return {
+    id,
+    householdId,
+    createdAt: now.toISOString(),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    userPrefs: defaultUserPrefs(),
+    syncOn: false,
+  }
 }

@@ -194,6 +194,7 @@ describe('isValidIsoDateTime', () => {
     { value: '2026-11-15T9:30:00.000Z', valid: false }, // one-digit hour
     { value: '+012026-11-15T09:30:00.000Z', valid: false }, // extended year
     { value: ' 2026-11-15T09:30:00.000Z', valid: false },
+    { value: '2026-11-15T09:30:00.000Z extra', valid: false }, // trailing text
     { value: '', valid: false },
     { value: 'not a date', valid: false },
     // An offset instead of Z
@@ -213,6 +214,7 @@ describe('isValidIsoDateTime', () => {
     { value: '2026-11-15T09:30:60.000Z', valid: false }, // no leap seconds
     // Before the year 0100, as isValidIsoDate
     { value: '0099-12-31T23:59:59.999Z', valid: false },
+    { value: '0050-06-15T09:30:00.000Z', valid: false },
     // A date on its own
     { value: '2026-11-15', valid: false },
   ])('$value is valid: $valid', ({ value, valid }) => {

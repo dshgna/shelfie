@@ -7,19 +7,19 @@
 import type { IsoDateTime } from '../../dates'
 import { defaultHouseholdPrefs, type Household } from '../../household'
 import { CURRENT_SCHEMA_VERSION, type Item } from '../../item'
-import type { ItemRecord } from '../../item-record'
-import type { Purchase } from '../../stock'
+import type { ItemPurchaseRecord } from '../../item-purchase-record'
 import { defaultUserPrefs, type User } from '../../user'
 
 /** The "today" most tests use. Tests that need a different day pass their own. */
 export const TODAY = '2026-11-14'
 
-/** A moment on TODAY, in UTC, for createdAt and updatedAt fields. */
+/** A moment on TODAY, in UTC, for createdAt, addedAt and updatedAt fields. */
 export const NOW: IsoDateTime = '2026-11-14T09:30:00.000Z'
 
 /**
- * A valid, invented item at CURRENT_SCHEMA_VERSION: 3 tubes in stock, reorder at 1 left, no
- * lifetime, no dates, no links. validateItem finds nothing wrong with it, and its status is 'ok'.
+ * A valid, invented item at CURRENT_SCHEMA_VERSION in the makeHousehold() household: 3 tubes in
+ * stock, reorder at 1 left, no lifetime, no dates, no links, not deleted. validateItem finds
+ * nothing wrong with it, and its status is 'ok'.
  * Pass overrides for the fields a test is about.
  */
 export function makeItem(overrides: Partial<Item> = {}): Item {
@@ -39,23 +39,8 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     notes: '',
     links: {},
     isExample: false,
-    ...overrides,
-  }
-}
-
-/**
- * A valid, invented purchase: 3 bottles of shampoo, 30 days each, bought on TODAY.
- * Pass overrides for the fields a test is about.
- */
-export function makePurchase(overrides: Partial<Purchase> = {}): Purchase {
-  return {
-    count: 3,
-    lifeDays: 30,
-    boughtOn: TODAY,
-    name: 'Rosemary Shampoo',
-    size: '250 ml',
-    unit: 'bottle',
-    category: 'hair',
+    householdId: 'test-household',
+    deleted: false,
     ...overrides,
   }
 }
@@ -89,16 +74,22 @@ export function makeUser(overrides: Partial<User> = {}): User {
 }
 
 /**
- * makeItem() as storage keeps it: in the makeHousehold() household, created and last changed at
- * NOW, not deleted. Pass overrides for the fields a test is about.
+ * A valid, invented purchase record: 2 tubes (75 ml) of the makeItem() item, bought on TODAY,
+ * added and last changed at NOW, no expiry date. Pass overrides for the fields a test is about.
  */
-export function makeItemRecord(overrides: Partial<ItemRecord> = {}): ItemRecord {
+export function makeItemPurchaseRecord(
+  overrides: Partial<ItemPurchaseRecord> = {},
+): ItemPurchaseRecord {
   return {
-    ...makeItem(),
-    householdId: 'test-household',
-    createdAt: NOW,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    id: 'test-record',
+    itemId: 'test-item',
+    quantity: 2,
+    size: '75 ml',
+    unit: 'tube',
+    boughtAt: TODAY,
+    addedAt: NOW,
     updatedAt: NOW,
-    deleted: false,
     ...overrides,
   }
 }

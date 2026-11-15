@@ -10,7 +10,7 @@ import {
   type NormRowResult,
 } from '../import-rows'
 import type { Item } from '../item'
-import { calcStock, type Purchase } from '../stock'
+import { calcStock } from '../stock'
 import { TODAY, makeItem } from './helpers/fixtures'
 
 // Invented example data, not anyone's real orders or inventory.
@@ -37,8 +37,8 @@ const cleanDraft: ImportDraft = {
   brand: 'Exampleside',
   size: '500 ml',
   unit: 'bottle',
-  count: 2,
-  boughtOn: '2026-11-01',
+  quantity: 2,
+  boughtAt: '2026-11-01',
   shop: 'Corner Shop',
   category: 'kitchen',
   group: 'Dishwashing',
@@ -73,8 +73,8 @@ describe('normRow', () => {
         brand: '',
         size: '',
         unit: 'bottle',
-        count: 1,
-        boughtOn: TODAY,
+        quantity: 1,
+        boughtAt: TODAY,
         shop: '',
         category: 'household',
         group: 'Other',
@@ -153,60 +153,65 @@ describe('normRow', () => {
       codes: [],
     },
     // Count
-    { case: 'count as text', row: { count: '3' }, expected: { count: 3 }, codes: [] },
-    { case: 'count with spaces', row: { count: ' 4 ' }, expected: { count: 4 }, codes: [] },
+    { case: 'count as text', row: { count: '3' }, expected: { quantity: 3 }, codes: [] },
+    { case: 'count with spaces', row: { count: ' 4 ' }, expected: { quantity: 4 }, codes: [] },
     {
       case: 'count as words',
       row: { count: 'three' },
-      expected: { count: 1 },
+      expected: { quantity: 1 },
       codes: ['count-adjusted'],
     },
     {
       case: 'negative count',
       row: { count: -2 },
-      expected: { count: 1 },
+      expected: { quantity: 1 },
       codes: ['count-adjusted'],
     },
-    { case: 'zero count', row: { count: 0 }, expected: { count: 1 }, codes: ['count-adjusted'] },
+    { case: 'zero count', row: { count: 0 }, expected: { quantity: 1 }, codes: ['count-adjusted'] },
     {
       case: 'fractional count',
       row: { count: 2.5 },
-      expected: { count: 3 },
+      expected: { quantity: 3 },
       codes: ['count-adjusted'],
     },
-    { case: 'count of 99', row: { count: 99 }, expected: { count: 99 }, codes: [] },
-    { case: 'large count', row: { count: 150 }, expected: { count: 150 }, codes: ['count-large'] },
+    { case: 'count of 99', row: { count: 99 }, expected: { quantity: 99 }, codes: [] },
+    {
+      case: 'large count',
+      row: { count: 150 },
+      expected: { quantity: 150 },
+      codes: ['count-large'],
+    },
     {
       case: 'large count as text',
       row: { count: '150' },
-      expected: { count: 150 },
+      expected: { quantity: 150 },
       codes: ['count-large'],
     },
     {
       case: 'count with a word after it',
       row: { count: '3 bottles' },
-      expected: { count: 3 },
+      expected: { quantity: 3 },
       codes: ['count-adjusted'],
     },
     {
       case: 'decimal count as text',
       row: { count: '2.5' },
-      expected: { count: 2 },
+      expected: { quantity: 2 },
       codes: ['count-adjusted'],
     },
     {
       case: 'negative count as text',
       row: { count: '-3' },
-      expected: { count: 1 },
+      expected: { quantity: 1 },
       codes: ['count-adjusted'],
     },
     {
       case: 'true as count',
       row: { count: true },
-      expected: { count: 1 },
+      expected: { quantity: 1 },
       codes: ['count-adjusted'],
     },
-    { case: 'missing count', row: { count: undefined }, expected: { count: 1 }, codes: [] },
+    { case: 'missing count', row: { count: undefined }, expected: { quantity: 1 }, codes: [] },
     // Category and group
     {
       case: 'wrong-case category',
@@ -367,37 +372,37 @@ describe('normRow', () => {
   })
 
   it.each([
-    { case: 'a real past date', date: '2026-10-31', boughtOn: '2026-10-31', codes: [] },
-    { case: 'today', date: TODAY, boughtOn: TODAY, codes: [] },
-    { case: 'the day after the floor', date: '2000-01-02', boughtOn: '2000-01-02', codes: [] },
-    { case: 'empty', date: '', boughtOn: TODAY, codes: [] },
-    { case: 'null', date: null, boughtOn: TODAY, codes: [] },
-    { case: 'tomorrow', date: '2026-11-15', boughtOn: TODAY, codes: ['date-in-future'] },
-    { case: 'next year', date: '2027-01-01', boughtOn: TODAY, codes: ['date-in-future'] },
+    { case: 'a real past date', date: '2026-10-31', boughtAt: '2026-10-31', codes: [] },
+    { case: 'today', date: TODAY, boughtAt: TODAY, codes: [] },
+    { case: 'the day after the floor', date: '2000-01-02', boughtAt: '2000-01-02', codes: [] },
+    { case: 'empty', date: '', boughtAt: TODAY, codes: [] },
+    { case: 'null', date: null, boughtAt: TODAY, codes: [] },
+    { case: 'tomorrow', date: '2026-11-15', boughtAt: TODAY, codes: ['date-in-future'] },
+    { case: 'next year', date: '2027-01-01', boughtAt: TODAY, codes: ['date-in-future'] },
     {
       case: 'the floor itself',
       date: '2000-01-01',
-      boughtOn: TODAY,
+      boughtAt: TODAY,
       codes: ['date-too-old'],
     },
-    { case: 'before 2000', date: '1999-06-01', boughtOn: TODAY, codes: ['date-too-old'] },
+    { case: 'before 2000', date: '1999-06-01', boughtAt: TODAY, codes: ['date-too-old'] },
     {
       case: 'an impossible date',
       date: '2026-02-30',
-      boughtOn: TODAY,
+      boughtAt: TODAY,
       codes: ['invalid-date'],
     },
-    { case: 'another format', date: '14/11/2026', boughtOn: TODAY, codes: ['invalid-date'] },
-    { case: 'with a time', date: '2026-11-01T10:00', boughtOn: TODAY, codes: ['invalid-date'] },
-    { case: 'a number', date: 20261101, boughtOn: TODAY, codes: ['wrong-type'] },
+    { case: 'another format', date: '14/11/2026', boughtAt: TODAY, codes: ['invalid-date'] },
+    { case: 'with a time', date: '2026-11-01T10:00', boughtAt: TODAY, codes: ['invalid-date'] },
+    { case: 'a number', date: 20261101, boughtAt: TODAY, codes: ['wrong-type'] },
   ] satisfies Array<{
     case: string
     date: unknown
-    boughtOn: string
+    boughtAt: string
     codes: ImportIssueCode[]
-  }>)('date: $case', ({ date, boughtOn, codes }) => {
+  }>)('date: $case', ({ date, boughtAt, codes }) => {
     const { draft } = draftOf({ ...cleanRow, date })
-    expect(draft.boughtOn).toBe(boughtOn)
+    expect(draft.boughtAt).toBe(boughtAt)
     expect(codesOf({ ...cleanRow, date })).toEqual(codes)
   })
 
@@ -466,19 +471,19 @@ describe('normRow', () => {
     expect(draft).toMatchObject({
       name: '  Lemon Washing-Up Liquid',
       brand: '',
-      count: 1,
+      quantity: 1,
       unit: 'bottle',
       category: 'household',
       links: {},
     })
-    expect(draft.boughtOn).toBe(TODAY)
+    expect(draft.boughtAt).toBe(TODAY)
     expect(draft).not.toHaveProperty('extra')
     expect(issues.map((issue) => `${issue.field}:${issue.code}`).sort()).toEqual(
       [
-        'boughtOn:date-in-future',
+        'boughtAt:date-in-future',
         'brand:wrong-type',
         'category:unknown-category',
-        'count:count-adjusted',
+        'quantity:count-adjusted',
         'links.product:link-scheme',
       ].sort(),
     )
@@ -517,11 +522,10 @@ describe('normRow', () => {
     expect(() => normRow(row, TODAY)).not.toThrow()
   })
 
-  it('gives a draft calcStock accepts as a Purchase', () => {
+  it('gives a draft calcStock accepts as it is', () => {
     const { draft } = draftOf(cleanRow)
-    const purchase: Purchase = draft // checked by TypeScript
     // 500 ml at 10 ml a day lasts 50 days; bought 13 days ago, so both are left.
-    expect(calcStock(purchase, TODAY)).toEqual({
+    expect(calcStock(draft, TODAY)).toEqual({
       lifeDays: 50,
       used: 0,
       left: 2,
@@ -664,7 +668,7 @@ describe('findMatch', () => {
 describe('boundaries added in the test review', () => {
   it('reads a count of NaN as 1, and says so', () => {
     const { draft, issues } = draftOf({ ...cleanRow, count: Number.NaN })
-    expect(draft.count).toBe(1)
+    expect(draft.quantity).toBe(1)
     expect(issues.map((issue) => issue.code)).toEqual(['count-adjusted'])
   })
 })

@@ -26,7 +26,7 @@ function fakeDeps() {
   const deps: FirstRunDeps = {
     now: () => {
       calls.now += 1
-      return `2026-11-14T09:30:0${calls.now}.000Z`
+      return new Date(Date.UTC(2026, 10, 14, 9, 30, calls.now))
     },
     newId: () => {
       calls.newId += 1

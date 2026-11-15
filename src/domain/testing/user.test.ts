@@ -1,7 +1,14 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { isValidIsoDateTime, type IsoDateTime } from '../dates'
 import { CURRENT_SCHEMA_VERSION } from '../item'
-import { defaultUserPrefs, type KdfParams, type Theme, type User, type UserPrefs } from '../user'
+import {
+  defaultUserPrefs,
+  newUser,
+  type KdfParams,
+  type Theme,
+  type User,
+  type UserPrefs,
+} from '../user'
 import { makeUser } from './helpers/fixtures'
 
 // Invented example data. The salt and key check are made-up base64, not real key material.
@@ -87,5 +94,34 @@ describe('UserPrefs', () => {
     first.theme = 'dark'
     expect(defaultUserPrefs().theme).toBe('system')
     expect(defaultUserPrefs()).not.toBe(defaultUserPrefs())
+  })
+})
+
+describe('newUser', () => {
+  const now = new Date(Date.UTC(2026, 10, 15, 9, 30))
+
+  it('builds a user from the ids and moment it is given', () => {
+    expect(newUser({ id: 'user-9', householdId: 'household-9', now })).toEqual({
+      id: 'user-9',
+      householdId: 'household-9',
+      createdAt: '2026-11-15T09:30:00.000Z',
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      userPrefs: { theme: 'system' },
+      syncOn: false,
+    })
+  })
+
+  it('writes createdAt as the exact ISO text, with sync off and no key fields', () => {
+    const user = newUser({ id: 'user-9', householdId: 'household-9', now })
+    expect(user.createdAt).toBe(now.toISOString())
+    expect(isValidIsoDateTime(user.createdAt)).toBe(true)
+    expect(user.syncOn).toBe(false)
+    for (const field of ['keySalt', 'kdfParams', 'keyCheck', 'lastSyncAt']) {
+      expect(field in user, field).toBe(false)
+    }
+  })
+
+  it('throws for an Invalid Date', () => {
+    expect(() => newUser({ id: 'u', householdId: 'h', now: new Date('nope') })).toThrow(RangeError)
   })
 })

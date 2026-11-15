@@ -2,21 +2,32 @@ import { describe, expect, it } from 'vitest'
 import { InvalidDateError, plusDays } from '../dates'
 import type { Item } from '../item'
 import { status, type Status } from '../status'
-import { calcStock, type Purchase, type StockEstimate } from '../stock'
-import { TODAY, makeItem, makePurchase } from './helpers/fixtures'
+import { calcStock, type StockEstimate } from '../stock'
+import { TODAY, makeItem, makeItemPurchaseRecord } from './helpers/fixtures'
 
-// Invented example data. makePurchase's default: 3 bottles of shampoo, 30 days each, bought
-// on TODAY. All dates are relative to TODAY.
+/** What calcStock takes. */
+type StockInput = Parameters<typeof calcStock>[0]
+
+/**
+ * Invented example data: a purchase record of 3 bottles of shampoo (250 ml), 30 days each,
+ * bought on TODAY. Pass overrides for the fields a test is about.
+ */
+function makePurchase(overrides: Partial<StockInput> = {}): StockInput {
+  return {
+    ...makeItemPurchaseRecord({ quantity: 3, size: '250 ml', unit: 'bottle', boughtAt: TODAY }),
+    name: 'Rosemary Shampoo',
+    category: 'hair',
+    lifeDays: 30,
+    ...overrides,
+  }
+}
+
+// All dates are relative to TODAY.
 const daysAgo = (n: number) => plusDays(TODAY, -n)
 const inDays = (n: number) => plusDays(TODAY, n)
 
 describe('calcStock', () => {
   it.each([
-    {
-      case: 'zero bought',
-      purchase: makePurchase({ count: 0, boughtOn: daysAgo(10) }),
-      expected: { lifeDays: 30, used: 0, left: 0 },
-    },
     {
       case: 'bought today',
       purchase: makePurchase(),
@@ -24,64 +35,64 @@ describe('calcStock', () => {
     },
     {
       case: 'no purchase date (counts as today)',
-      purchase: makePurchase({ boughtOn: undefined }),
+      purchase: makePurchase({ boughtAt: undefined }),
       expected: { lifeDays: 30, used: 0, left: 3, startedOn: TODAY },
     },
     // On the boundary the first one is used up and the next starts that day.
     {
       case: 'a day before one lifetime',
-      purchase: makePurchase({ boughtOn: daysAgo(29) }),
+      purchase: makePurchase({ boughtAt: daysAgo(29) }),
       expected: { lifeDays: 30, used: 0, left: 3, startedOn: daysAgo(29) },
     },
     {
       case: 'exactly one lifetime',
-      purchase: makePurchase({ boughtOn: daysAgo(30) }),
+      purchase: makePurchase({ boughtAt: daysAgo(30) }),
       expected: { lifeDays: 30, used: 1, left: 2, startedOn: TODAY },
     },
     {
       case: 'a day after one lifetime',
-      purchase: makePurchase({ boughtOn: daysAgo(31) }),
+      purchase: makePurchase({ boughtAt: daysAgo(31) }),
       expected: { lifeDays: 30, used: 1, left: 2, startedOn: daysAgo(1) },
     },
     {
       case: 'exactly all lifetimes',
-      purchase: makePurchase({ boughtOn: daysAgo(90) }),
+      purchase: makePurchase({ boughtAt: daysAgo(90) }),
       expected: { lifeDays: 30, used: 3, left: 0 },
     },
     {
       case: 'many lifetimes (clamped at 0 left)',
-      purchase: makePurchase({ boughtOn: daysAgo(400) }),
+      purchase: makePurchase({ boughtAt: daysAgo(400) }),
       expected: { lifeDays: 30, used: 3, left: 0 },
     },
     {
       case: 'a multipack counted per item (pack of 3 bought twice)',
-      purchase: makePurchase({ count: 6, boughtOn: daysAgo(45) }),
+      purchase: makePurchase({ quantity: 6, boughtAt: daysAgo(45) }),
       expected: { lifeDays: 30, used: 1, left: 5, startedOn: daysAgo(15) },
     },
     // Oddity kept: a future purchase date counts as 0 days, but the start date stays in the future.
     {
       case: 'a purchase date in the future',
-      purchase: makePurchase({ boughtOn: inDays(10) }),
+      purchase: makePurchase({ boughtAt: inDays(10) }),
       expected: { lifeDays: 30, used: 0, left: 3, startedOn: inDays(10) },
     },
     // No lifetime: guessed. 250 ml of shampoo at 5 ml a day is 50 days.
     {
       case: 'no lifetime (guessed)',
-      purchase: makePurchase({ lifeDays: undefined, boughtOn: daysAgo(60) }),
+      purchase: makePurchase({ lifeDays: undefined, boughtAt: daysAgo(60) }),
       expected: { lifeDays: 50, used: 1, left: 2, startedOn: daysAgo(10) },
     },
     {
       case: 'a lifetime of 0 (guessed)',
-      purchase: makePurchase({ lifeDays: 0, boughtOn: daysAgo(60) }),
+      purchase: makePurchase({ lifeDays: 0, boughtAt: daysAgo(60) }),
       expected: { lifeDays: 50, used: 1, left: 2, startedOn: daysAgo(10) },
     },
     // 30.5 days: one used up after 31 days, and the start date drops the half day, as in the prototype.
     {
       case: 'a fractional lifetime',
-      purchase: makePurchase({ lifeDays: 30.5, boughtOn: daysAgo(31) }),
+      purchase: makePurchase({ lifeDays: 30.5, boughtAt: daysAgo(31) }),
       expected: { lifeDays: 30.5, used: 1, left: 2, startedOn: daysAgo(1) },
     },
-  ] satisfies Array<{ case: string; purchase: Purchase; expected: StockEstimate }>)(
+  ] satisfies Array<{ case: string; purchase: StockInput; expected: StockEstimate }>)(
     '$case',
     ({ purchase, expected }) => {
       expect(calcStock(purchase, TODAY)).toEqual(expected)
@@ -89,19 +100,20 @@ describe('calcStock', () => {
   )
 
   it('leaves startedOn out when nothing is left', () => {
-    expect('startedOn' in calcStock(makePurchase({ boughtOn: daysAgo(400) }), TODAY)).toBe(false)
+    expect('startedOn' in calcStock(makePurchase({ boughtAt: daysAgo(400) }), TODAY)).toBe(false)
   })
 
   it.each([
-    { case: 'a fraction', count: 1.5 },
-    { case: 'a negative count', count: -1 },
-    { case: 'NaN', count: Number.NaN },
-  ])('throws a RangeError for $case', ({ count }) => {
-    expect(() => calcStock(makePurchase({ count }), TODAY)).toThrow(RangeError)
+    { case: 'zero bought', quantity: 0 },
+    { case: 'a fraction', quantity: 1.5 },
+    { case: 'a negative quantity', quantity: -1 },
+    { case: 'NaN', quantity: Number.NaN },
+  ])('throws a RangeError for $case', ({ quantity }) => {
+    expect(() => calcStock(makePurchase({ quantity }), TODAY)).toThrow(RangeError)
   })
 
   it('throws InvalidDateError for an impossible purchase date', () => {
-    expect(() => calcStock(makePurchase({ boughtOn: '2026-02-30' }), TODAY)).toThrow(
+    expect(() => calcStock(makePurchase({ boughtAt: '2026-02-30' }), TODAY)).toThrow(
       InvalidDateError,
     )
   })
@@ -134,7 +146,10 @@ describe('calcStock and status agree', () => {
   ] satisfies Array<{ case: string; count: number; boughtDaysAgo: number; expected: Status }>)(
     '$case: $expected',
     ({ count, boughtDaysAgo, expected }) => {
-      const estimate = calcStock(makePurchase({ count, boughtOn: daysAgo(boughtDaysAgo) }), TODAY)
+      const estimate = calcStock(
+        makePurchase({ quantity: count, boughtAt: daysAgo(boughtDaysAgo) }),
+        TODAY,
+      )
       expect(status(itemFrom(estimate), TODAY)).toBe(expected)
     },
   )
@@ -148,7 +163,7 @@ describe('boundaries added in the test review', () => {
     'one bought, $boughtDaysAgo days ago',
     ({ boughtDaysAgo, expected }) => {
       expect(
-        calcStock(makePurchase({ count: 1, boughtOn: daysAgo(boughtDaysAgo) }), TODAY),
+        calcStock(makePurchase({ quantity: 1, boughtAt: daysAgo(boughtDaysAgo) }), TODAY),
       ).toEqual(expected)
     },
   )
@@ -163,10 +178,10 @@ describe('boundaries added in the test review', () => {
 
   // 30 days that include a clock change still count as exactly 30.
   it.each([
-    { today: '2026-03-31', boughtOn: '2026-03-01' },
-    { today: '2026-11-02', boughtOn: '2026-10-03' },
-  ])('across a clock change: bought $boughtOn, today $today', ({ today, boughtOn }) => {
-    expect(calcStock(makePurchase({ boughtOn }), today)).toEqual({
+    { today: '2026-03-31', boughtAt: '2026-03-01' },
+    { today: '2026-11-02', boughtAt: '2026-10-03' },
+  ])('across a clock change: bought $boughtAt, today $today', ({ today, boughtAt }) => {
+    expect(calcStock(makePurchase({ boughtAt }), today)).toEqual({
       lifeDays: 30,
       used: 1,
       left: 2,

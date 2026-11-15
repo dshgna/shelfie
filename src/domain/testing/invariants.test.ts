@@ -106,14 +106,14 @@ describe('invariants', () => {
   it('migrateToCurrent returns already-current items unchanged, however often it runs', () => {
     // Current items as storage would hold them: normalised, with unique ids.
     const stored = itemGrid().map(normalizeItem)
-    const first = migrateToCurrent(stored, { today: TODAY })
+    const first = migrateToCurrent(stored, { today: TODAY, householdId: 'test-household' })
     expect(first.removed).toEqual([])
     expect(first.items.map((entry) => entry.item)).toEqual(stored)
     expect(first.items.every((entry) => entry.from === 'schema-1')).toBe(true)
 
     const second = migrateToCurrent(
       first.items.map((entry) => entry.item),
-      { today: TODAY },
+      { today: TODAY, householdId: 'test-household' },
     )
     expect(second.items.map((entry) => entry.item)).toEqual(stored)
   })
