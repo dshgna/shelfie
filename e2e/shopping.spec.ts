@@ -63,7 +63,7 @@ test('ticks an item, changes how many, and adds it to stock', async ({ page }) =
 
   await page.getByRole('tab', { name: /Inventory/ }).click()
   const row = page.getByRole('listitem').filter({ hasText: 'Oat Shampoo' })
-  await expect(row.getByText('3 left')).toBeVisible()
+  await expect(row.locator('[aria-live]')).toHaveText('3 left')
 })
 
 test('every control is at least 44px and nothing leaves our origin', async ({ page, baseURL }) => {

@@ -12,7 +12,10 @@ function row(page: Page, name: string): Locator {
 
 /** The label inside the row's icon SVG, such as "Bottle, nearly empty". */
 async function iconLabel(page: Page, name: string): Promise<string> {
-  const img = row(page, name).locator('img')
+  // The container icon is the one inside the row's "Open … to edit" button.
+  const img = row(page, name)
+    .getByRole('button', { name: /^Open / })
+    .locator('img')
   await expect(img).toHaveJSProperty('complete', true)
   expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0)
   const src = (await img.getAttribute('src')) ?? ''
@@ -26,25 +29,25 @@ async function iconLabel(page: Page, name: string): Promise<string> {
 test('plus and minus are named after the item and change its count', async ({ page }) => {
   await page.goto('/')
   const gel = row(page, 'Gel Cleanser')
-  await expect(gel.getByText('2 left')).toBeVisible()
+  await expect(gel.locator('[aria-live]')).toHaveText('2 left')
 
   const add = page.getByRole('button', { name: 'Add one Gel Cleanser' })
   await add.click()
-  await expect(gel.getByText('3 left')).toBeVisible()
+  await expect(gel.locator('[aria-live]')).toHaveText('3 left')
   await expect(add).toBeFocused()
 
   await page.getByRole('button', { name: 'Remove one Gel Cleanser' }).click()
   await page.getByRole('button', { name: 'Remove one Gel Cleanser' }).click()
-  await expect(gel.getByText('1 left')).toBeVisible()
+  await expect(gel.locator('[aria-live]')).toHaveText('1 left')
 })
 
 test('minus stops at 0 and keeps focus', async ({ page }) => {
   await page.goto('/')
   const sponges = row(page, 'Kitchen Sponges')
   const remove = page.getByRole('button', { name: 'Remove one Kitchen Sponges' })
-  await expect(sponges.getByText('0 left')).toBeVisible()
+  await expect(sponges.locator('[aria-live]')).toHaveText('0 left')
   await remove.click()
-  await expect(sponges.getByText('0 left')).toBeVisible()
+  await expect(sponges.locator('[aria-live]')).toHaveText('0 left')
   await expect(remove).toBeFocused()
 })
 
@@ -67,7 +70,11 @@ test('each row shows its container icon, the low one when it needs restocking', 
   // "candle" has no icon of its own, so it falls back to box.svg.
   expect(await iconLabel(page, 'Beeswax Candle')).toBe('Box, 70% left')
   // The icon is decorative: the row's name and stock bar say the same thing.
-  await expect(row(page, 'Gel Cleanser').locator('img')).toHaveAttribute('alt', '')
+  await expect(
+    row(page, 'Gel Cleanser')
+      .getByRole('button', { name: /^Open / })
+      .locator('img'),
+  ).toHaveAttribute('alt', '')
 })
 
 test('the icon switches to the low one when stock runs low', async ({ page }) => {
@@ -76,7 +83,7 @@ test('the icon switches to the low one when stock runs low', async ({ page }) =>
   expect(await iconLabel(page, 'Mint Toothpaste')).toBe('Tube, 70% left')
   await page.getByRole('button', { name: 'Remove one Mint Toothpaste' }).click()
   await page.getByRole('button', { name: 'Remove one Mint Toothpaste' }).click()
-  await expect(row(page, 'Mint Toothpaste').getByText('1 left')).toBeVisible()
+  await expect(row(page, 'Mint Toothpaste').locator('[aria-live]')).toHaveText('1 left')
   expect(await iconLabel(page, 'Mint Toothpaste')).toBe('Tube, nearly empty')
 })
 

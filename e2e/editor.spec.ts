@@ -41,7 +41,7 @@ test('saves changes to the item', async ({ page }) => {
   const row = page.getByRole('listitem').filter({
     has: page.getByRole('button', { name: 'Open Gentle Gel Cleanser to edit' }),
   })
-  await expect(row.getByText('5 left')).toBeVisible()
+  await expect(row.locator('[aria-live]')).toHaveText('5 left')
 })
 
 test('asks before deleting, inside the page, and Keep it keeps the item', async ({ page }) => {
