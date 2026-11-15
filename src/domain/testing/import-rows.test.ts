@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { InvalidDateError } from './dates'
+import { InvalidDateError } from '../dates'
 import {
   findMatch,
   normRow,
@@ -8,10 +8,10 @@ import {
   type ImportDraft,
   type ImportIssueCode,
   type NormRowResult,
-} from './import-rows'
-import type { Item } from './item'
-import { calcStock, type Purchase } from './stock'
-import { TODAY, makeItem } from './testing/fixtures'
+} from '../import-rows'
+import type { Item } from '../item'
+import { calcStock, type Purchase } from '../stock'
+import { TODAY, makeItem } from './helpers/fixtures'
 
 // Invented example data, not anyone's real orders or inventory.
 

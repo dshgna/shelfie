@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { InvalidDateError } from './dates'
-import { CURRENT_SCHEMA_VERSION, type Item } from './item'
+import { InvalidDateError } from '../dates'
+import { CURRENT_SCHEMA_VERSION, type Item } from '../item'
 import {
   CURRENT_VERSION,
   MIGRATIONS,
@@ -12,7 +12,7 @@ import {
   type MigrationErrorCode,
   type MigrationStep,
   type StoredVersion,
-} from './migrations'
+} from '../migrations'
 
 // Invented example data, not anyone's real inventory.
 

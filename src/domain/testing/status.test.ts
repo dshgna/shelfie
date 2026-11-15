@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { InvalidDateError, plusDays } from './dates'
-import type { Item } from './item'
+import { InvalidDateError, plusDays } from '../dates'
+import type { Item } from '../item'
 import {
   DEFAULT_SHARE,
   STATUSES,
@@ -12,8 +12,8 @@ import {
   status,
   timing,
   type Status,
-} from './status'
-import { TODAY, makeItem } from './testing/fixtures'
+} from '../status'
+import { TODAY, makeItem } from './helpers/fixtures'
 
 // Invented example data. makeItem's default: 3 in stock, reorder at 1, no lifetime, no
 // expiry, so status 'ok'. All dates are relative to TODAY.

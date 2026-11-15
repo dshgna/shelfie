@@ -2,16 +2,16 @@
 // Ported from the prototype's item shape (version `v: 6`). Prototype field names are noted
 // beside each field so the prototype importer (a later item) can map them.
 
-/** Bump this whenever the stored shape of an Item changes, and add a migration for it. */
-export const CURRENT_SCHEMA_VERSION = 1
+import type { IsoDate } from './dates'
+
+/** IsoDate lives in dates.ts; re-exported so existing `import { IsoDate } from './item'` works. */
+export type { IsoDate }
 
 /**
- * A calendar date written as "YYYY-MM-DD", for example "2026-11-14".
- * Dates are kept as strings, never Date objects: JSON, IndexedDB and sync can't store a Date
- * as a Date (it comes back as a string or not at all), and a plain day has no time zone to
- * get wrong.
+ * The shape version of every stored record: items, users and households all share it. Bump it
+ * whenever the stored shape of any of them changes, and add a migration for each record type.
  */
-export type IsoDate = string
+export const CURRENT_SCHEMA_VERSION = 1
 
 /**
  * An absolute web address starting with http:// or https://. Checked by `isSafeLink` in

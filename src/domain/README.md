@@ -2,7 +2,7 @@
 
 This folder holds Shelfie's pure rules: the item model, stock estimation, shelves, routine, import classification and greener swaps.
 
-- Every module has a test file beside it: `x.ts` and `x.test.ts`.
+- Every module has a test file in `testing/`: `x.ts` and `testing/x.test.ts`. Checks that span modules are in `testing/invariants.test.ts`, and shared test data in `testing/helpers/fixtures.ts`. Nothing outside test files may import from `testing/` (`src/fixtures-usage.test.ts` checks).
 - Nothing here may import React, Supabase, IndexedDB, Capacitor or anything from outside `src/domain`.
 - Nothing here may use browser globals (`window`, `document`, `localStorage`, `sessionStorage`, `indexedDB`, `navigator`) or the network (`fetch`).
 - Today's date is always passed in as a parameter, never read with `new Date()` inside a rule. The same goes for `Date.now()` and `Math.random()`. `new Date(someValue)` is fine: it converts a value without reading the clock.

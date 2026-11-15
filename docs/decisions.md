@@ -2,6 +2,10 @@
 
 Newest first. One line per decision, with the reason.
 
+## 15 Nov 2026
+
+- **Domain tests live in `src/domain/testing/`, not beside each module; shared test data in `testing/helpers/`.** Keeps the rule modules and the tests apart. The three tests in `src/` that read files (design tokens, fixture usage, security headers) stay in `src/`, outside the domain's fences.
+
 ## 14 Nov 2026
 
 - **Prototype migration: `basics` items go to `household`, keeping their group; the legacy `full` field is dropped.** Shelfie has no Household Basics category, and moving the items keeps their group names so nothing is lost. `full` (a full product name, sometimes with a brand link) has no place in the Item model.

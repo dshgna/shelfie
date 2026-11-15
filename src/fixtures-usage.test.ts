@@ -1,6 +1,6 @@
-// Guards the shared test data: src/domain/testing/ may only be imported by test files, so it can
-// never end up in the app bundle. Lives outside src/domain because it reads files (node:fs),
-// which domain code may not do.
+// Guards the shared test data: src/domain/testing/ (the domain tests and their helpers) may only
+// be imported by test files, so it can never end up in the app bundle. Lives outside src/domain
+// because it reads files (node:fs), which domain code may not do.
 
 import { readFileSync, readdirSync } from 'node:fs'
 import { join, relative } from 'node:path'
@@ -8,7 +8,9 @@ import { describe, expect, it } from 'vitest'
 
 const SRC = new URL('.', import.meta.url).pathname
 const TESTING_DIR = join(SRC, 'domain', 'testing')
-const IMPORT_OF_TESTING = /from\s+['"][^'"]*\/testing(\/[^'"]*)?['"]/
+// An import of anything in testing/ from outside it ('../domain/testing/helpers/fixtures'), or of
+// the fixtures from the tests next to them ('./helpers/fixtures').
+const IMPORT_OF_TESTING = /from\s+['"][^'"]*(\/testing(\/[^'"]*)?|\/helpers\/fixtures)['"]/
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

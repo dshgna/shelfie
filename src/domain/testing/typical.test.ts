@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { CATEGORIES } from './item'
-import { HOME_CATEGORIES, TYPICAL, guessDays, typicalFor, type Typical } from './typical'
+import { CATEGORIES } from '../item'
+import { HOME_CATEGORIES, TYPICAL, guessDays, typicalFor, type Typical } from '../typical'
 
 // Invented product names, not anyone's real purchases.
 

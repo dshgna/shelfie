@@ -1,5 +1,15 @@
-import { describe, expect, it } from 'vitest'
-import { InvalidDateError, daysUntil, isValidIsoDate, plusDays, startOfToday } from './dates'
+import { describe, expect, expectTypeOf, it } from 'vitest'
+import {
+  InvalidDateError,
+  daysUntil,
+  isValidIsoDate,
+  isValidIsoDateTime,
+  plusDays,
+  startOfToday,
+  type IsoDate,
+  type IsoDateTime,
+} from '../dates'
+import type { IsoDate as IsoDateFromItem } from '../item'
 
 /** Impossible date, not a date at all, empty, and the wrong shape. */
 const BAD_DATES = ['2026-02-30', 'not a date', '', '2026-1-5']
@@ -167,5 +177,67 @@ describe('year limits (added in the test review)', () => {
 
   it('throws a RangeError for a result before the year 0100', () => {
     expect(() => plusDays('0100-01-01', -1)).toThrow(RangeError)
+  })
+})
+
+describe('isValidIsoDateTime', () => {
+  it.each([
+    // Valid: exactly what toISOString() writes
+    { value: '2026-11-15T09:30:00.000Z', valid: true },
+    { value: '2028-02-29T23:59:59.999Z', valid: true }, // leap day
+    { value: '2026-12-31T23:59:59.999Z', valid: true }, // last moment of a year
+    { value: '0100-01-01T00:00:00.000Z', valid: true },
+    { value: '9999-12-31T23:59:59.999Z', valid: true },
+    // Wrong shape
+    { value: '2026-11-15 09:30:00.000Z', valid: false }, // space instead of T
+    { value: '2026-11-15t09:30:00.000z', valid: false }, // lowercase
+    { value: '2026-11-15T9:30:00.000Z', valid: false }, // one-digit hour
+    { value: '+012026-11-15T09:30:00.000Z', valid: false }, // extended year
+    { value: ' 2026-11-15T09:30:00.000Z', valid: false },
+    { value: '', valid: false },
+    { value: 'not a date', valid: false },
+    // An offset instead of Z
+    { value: '2026-11-15T09:30:00.000+00:00', valid: false },
+    { value: '2026-11-15T10:30:00.000+01:00', valid: false },
+    // Missing (or extra) fractions of a second
+    { value: '2026-11-15T09:30:00Z', valid: false },
+    { value: '2026-11-15T09:30Z', valid: false },
+    { value: '2026-11-15T09:30:00.0Z', valid: false },
+    { value: '2026-11-15T09:30:00.000000Z', valid: false },
+    // Impossible dates and times
+    { value: '2026-02-30T09:30:00.000Z', valid: false },
+    { value: '2026-02-29T09:30:00.000Z', valid: false }, // 2026 isn't a leap year
+    { value: '2026-13-01T09:30:00.000Z', valid: false },
+    { value: '2026-11-15T24:00:00.000Z', valid: false },
+    { value: '2026-11-15T09:60:00.000Z', valid: false },
+    { value: '2026-11-15T09:30:60.000Z', valid: false }, // no leap seconds
+    // Before the year 0100, as isValidIsoDate
+    { value: '0099-12-31T23:59:59.999Z', valid: false },
+    // A date on its own
+    { value: '2026-11-15', valid: false },
+  ])('$value is valid: $valid', ({ value, valid }) => {
+    expect(isValidIsoDateTime(value)).toBe(valid)
+  })
+
+  it('accepts what toISOString() writes, and keeps text order the same as time order', () => {
+    const earlier = new Date(Date.UTC(2026, 10, 15, 9, 30)).toISOString()
+    const later = new Date(Date.UTC(2026, 10, 15, 10, 5)).toISOString()
+    expect(isValidIsoDateTime(earlier)).toBe(true)
+    expect(earlier < later).toBe(true)
+  })
+
+  // A date-time is not a date: the calendar functions still refuse it.
+  it.each(['2026-11-15T09:30:00.000Z'])(
+    'plusDays and daysUntil throw InvalidDateError for %s',
+    (value) => {
+      expectInvalidDate(() => plusDays(value, 1), value)
+      expectInvalidDate(() => daysUntil(value, '2026-11-15'), value)
+    },
+  )
+
+  it('types both as text, and item.ts re-exports the same IsoDate', () => {
+    expectTypeOf<IsoDate>().toEqualTypeOf<string>()
+    expectTypeOf<IsoDateTime>().toEqualTypeOf<string>()
+    expectTypeOf<IsoDateFromItem>().toEqualTypeOf<IsoDate>()
   })
 })

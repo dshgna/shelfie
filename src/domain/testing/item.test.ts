@@ -9,7 +9,7 @@ import {
   type Item,
   type ReorderRule,
   type Unit,
-} from './item'
+} from '../item'
 
 // Invented example data, not anyone's real inventory.
 const soap = {

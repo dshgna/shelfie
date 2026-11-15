@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { InvalidDateError, plusDays } from './dates'
-import type { Item } from './item'
-import { status, type Status } from './status'
-import { calcStock, type Purchase, type StockEstimate } from './stock'
-import { TODAY, makeItem, makePurchase } from './testing/fixtures'
+import { InvalidDateError, plusDays } from '../dates'
+import type { Item } from '../item'
+import { status, type Status } from '../status'
+import { calcStock, type Purchase, type StockEstimate } from '../stock'
+import { TODAY, makeItem, makePurchase } from './helpers/fixtures'
 
 // Invented example data. makePurchase's default: 3 bottles of shampoo, 30 days each, bought
 // on TODAY. All dates are relative to TODAY.

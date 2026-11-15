@@ -6,12 +6,12 @@
 // machine's time zone.
 
 import { describe, expect, it } from 'vitest'
-import { daysUntil, plusDays } from './dates'
-import type { Item, ReorderRule } from './item'
-import { migrateToCurrent } from './migrations'
-import { STATUSES, status } from './status'
-import { TODAY, makeItem } from './testing/fixtures'
-import { normalizeItem, validateItem } from './validate'
+import { daysUntil, plusDays } from '../dates'
+import type { Item, ReorderRule } from '../item'
+import { migrateToCurrent } from '../migrations'
+import { STATUSES, status } from '../status'
+import { TODAY, makeItem } from './helpers/fixtures'
+import { normalizeItem, validateItem } from '../validate'
 
 /** Every calendar day from `first` to `last`, both included. */
 function everyDay(first: string, last: string): string[] {
@@ -142,5 +142,12 @@ describe('invariants', () => {
 
   it('validateItem finds nothing wrong with the makeItem() defaults', () => {
     expect(validateItem(makeItem())).toEqual([])
+  })
+
+  // Guards the test setup, not the code: domain tests must run in Node, where browser globals
+  // don't exist. Fails if a config change (for example jsdom for UI tests) reaches src/domain.
+  it('domain tests run without browser globals', () => {
+    // eslint-disable-next-line no-restricted-globals -- this test checks that they do NOT exist
+    expect(['window', 'document'].filter((name) => name in globalThis)).toEqual([])
   })
 })

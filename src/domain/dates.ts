@@ -3,8 +3,28 @@
 //
 // Calendar-date helpers, ported from the prototype's startOfToday, plusDays, addDays and daysUntil.
 // Domain code never reads the clock: "now" or "today" always comes in as a parameter.
+//
 
-import type { IsoDate } from './item'
+/**
+ * A calendar date written as "YYYY-MM-DD", for example "2026-11-14".
+ * Dates are kept as strings, never Date objects: JSON, IndexedDB and sync can't store a Date
+ * as a Date (it comes back as a string or not at all), and a plain day has no time zone to
+ * get wrong. Check with isValidIsoDate.
+ */
+export type IsoDate = string
+
+/**
+ * A moment in UTC, in exactly the shape `Date.prototype.toISOString()` produces:
+ * "2026-11-15T09:30:00.000Z" (four-digit year, milliseconds, and "Z", never an offset).
+ * Used for when records were created, changed and synced.
+ *
+ * The fixed shape is what makes these strings sort correctly as plain text: every field has a
+ * fixed width and they run from largest to smallest, so comparing two of them character by
+ * character ("2026-11-15T09:30:00.000Z" < "2026-11-15T10:05:00.000Z") gives the same order as
+ * comparing the moments. A shorter or offset form ("2026-11-15T09:30Z", "...+01:00") would break
+ * that. Check with isValidIsoDateTime.
+ */
+export type IsoDateTime = string
 
 /** Thrown when a function is given a date that isn't a real "YYYY-MM-DD" date (or a valid Date). */
 export class InvalidDateError extends Error {
@@ -62,6 +82,23 @@ function fromUtcDay(utcDay: number): string {
  */
 export function isValidIsoDate(value: string): boolean {
   return toUtcDay(value) !== undefined
+}
+
+const ISO_DATE_TIME_SHAPE = /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+
+/**
+ * True only for a real moment written exactly as toISOString() writes it, such as
+ * "2026-11-15T09:30:00.000Z". Rejects other shapes (no milliseconds, an offset such as "+01:00"
+ * instead of "Z", a date on its own), impossible dates ("2026-02-30T..."), impossible times
+ * ("T24:00:00.000Z", "T09:60:00.000Z") and, like isValidIsoDate, years before 0100.
+ */
+export function isValidIsoDateTime(value: string): boolean {
+  const match = ISO_DATE_TIME_SHAPE.exec(value)
+  if (!match || !isValidIsoDate(match[1] ?? '')) return false
+  // Round trip: a Date silently rolls impossible times over, so writing it back out only gives
+  // the same text when every part was real.
+  const ms = new Date(value).getTime()
+  return !Number.isNaN(ms) && new Date(ms).toISOString() === value
 }
 
 /**

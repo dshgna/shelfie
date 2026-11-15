@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { Item } from './item'
-import { makeItem as baseItem } from './testing/fixtures'
-import { isSafeLink, isValidShare, normalizeItem, validateItem, type IssueCode } from './validate'
+import type { Item } from '../item'
+import { makeItem as baseItem } from './helpers/fixtures'
+import { isSafeLink, isValidShare, normalizeItem, validateItem, type IssueCode } from '../validate'
 
 // Invented example data. Valid as it stands: one open, with a lifetime and a start date, so the
 // start-date rules have something to check.

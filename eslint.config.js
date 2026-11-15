@@ -3,10 +3,26 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 
+// src/storage is the only place that may use IndexedDB, so Dexie and the in-memory IndexedDB the
+// storage tests use are banned everywhere else under src/, test files included.
+const indexedDbPackages = ['dexie', 'fake-indexeddb'].map((name) => ({
+  regex: `^${name}(/|$)`,
+  message: 'Only src/storage may use IndexedDB.',
+}))
+
+const indexedDbBlock = {
+  files: ['src/**/*.{ts,tsx}'],
+  ignores: ['src/storage/**'],
+  rules: { 'no-restricted-imports': ['error', { patterns: indexedDbPackages }] },
+}
+
 // src/domain holds pure rules: no UI, storage, network or app code. See src/domain/README.md.
 const DOMAIN_RULES = 'src/domain/README.md'
 
+// The domain blocks below replace indexedDbBlock's rule for src/domain (ESLint keeps only the
+// last matching setting of a rule), so they repeat its patterns.
 const domainBannedPackages = [
+  ...indexedDbPackages,
   { regex: '^react(-dom)?(/|$)', message: `No React in src/domain. See ${DOMAIN_RULES}.` },
   {
     regex: '^react-aria-components(/|$)',
@@ -91,6 +107,7 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-imports': 'error',
     },
   },
+  indexedDbBlock,
   ...domainImportBlocks,
   {
     files: ['src/domain/**/*.ts'],
