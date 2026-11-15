@@ -1,0 +1,240 @@
+[
+  {
+    "unit": "bottle",
+    "group": "Containers",
+    "label": "Bottle",
+    "file": "bottle.svg",
+    "lowFile": "bottle-low.svg"
+  },
+  {
+    "unit": "tube",
+    "group": "Containers",
+    "label": "Tube",
+    "file": "tube.svg",
+    "lowFile": "tube-low.svg"
+  },
+  {
+    "unit": "jar",
+    "group": "Containers",
+    "label": "Jar",
+    "file": "jar.svg",
+    "lowFile": "jar-low.svg"
+  },
+  {
+    "unit": "tub",
+    "group": "Containers",
+    "label": "Tub",
+    "file": "tub.svg",
+    "lowFile": "tub-low.svg"
+  },
+  {
+    "unit": "pot",
+    "group": "Containers",
+    "label": "Pot",
+    "file": "pot.svg",
+    "lowFile": "pot-low.svg"
+  },
+  {
+    "unit": "pump",
+    "group": "Containers",
+    "label": "Pump bottle",
+    "file": "pump.svg",
+    "lowFile": "pump-low.svg"
+  },
+  {
+    "unit": "can",
+    "group": "Containers",
+    "label": "Can",
+    "file": "can.svg",
+    "lowFile": "can-low.svg"
+  },
+  {
+    "unit": "spray",
+    "group": "Containers",
+    "label": "Spray bottle",
+    "file": "spray.svg",
+    "lowFile": "spray-low.svg"
+  },
+  {
+    "unit": "carton",
+    "group": "Containers",
+    "label": "Carton",
+    "file": "carton.svg",
+    "lowFile": "carton-low.svg"
+  },
+  {
+    "unit": "sachet",
+    "group": "Containers",
+    "label": "Sachet",
+    "file": "sachet.svg",
+    "lowFile": "sachet-low.svg"
+  },
+  {
+    "unit": "refill",
+    "group": "Containers",
+    "label": "Refill pouch",
+    "file": "refill.svg",
+    "lowFile": "refill-low.svg"
+  },
+  {
+    "unit": "pack",
+    "group": "Packs & rolls",
+    "label": "Pack",
+    "file": "pack.svg",
+    "lowFile": "pack-low.svg"
+  },
+  {
+    "unit": "box",
+    "group": "Packs & rolls",
+    "label": "Box",
+    "file": "box.svg",
+    "lowFile": "box-low.svg"
+  },
+  {
+    "unit": "bag",
+    "group": "Packs & rolls",
+    "label": "Bag",
+    "file": "bag.svg",
+    "lowFile": "bag-low.svg"
+  },
+  {
+    "unit": "roll",
+    "group": "Packs & rolls",
+    "label": "Roll",
+    "file": "roll.svg",
+    "lowFile": "roll-low.svg"
+  },
+  {
+    "unit": "sheet",
+    "group": "Packs & rolls",
+    "label": "Sheets",
+    "file": "sheet.svg",
+    "lowFile": "sheet-low.svg"
+  },
+  {
+    "unit": "wipe",
+    "group": "Packs & rolls",
+    "label": "Wipes",
+    "file": "wipe.svg",
+    "lowFile": "wipe-low.svg"
+  },
+  {
+    "unit": "pad",
+    "group": "Packs & rolls",
+    "label": "Pad",
+    "file": "pad.svg",
+    "lowFile": "pad-low.svg"
+  },
+  {
+    "unit": "bar",
+    "group": "Packs & rolls",
+    "label": "Soap bar",
+    "file": "bar.svg",
+    "lowFile": "bar-low.svg"
+  },
+  {
+    "unit": "brush",
+    "group": "Tools & cloths",
+    "label": "Brush",
+    "file": "brush.svg",
+    "lowFile": "brush-low.svg"
+  },
+  {
+    "unit": "sponge",
+    "group": "Tools & cloths",
+    "label": "Sponge",
+    "file": "sponge.svg",
+    "lowFile": "sponge-low.svg"
+  },
+  {
+    "unit": "cloth",
+    "group": "Tools & cloths",
+    "label": "Cloth",
+    "file": "cloth.svg",
+    "lowFile": "cloth-low.svg"
+  },
+  {
+    "unit": "head",
+    "group": "Tools & cloths",
+    "label": "Brush head",
+    "file": "head.svg",
+    "lowFile": "head-low.svg"
+  },
+  {
+    "unit": "pair",
+    "group": "Tools & cloths",
+    "label": "Pair of mittens",
+    "file": "pair.svg",
+    "lowFile": "pair-low.svg"
+  },
+  {
+    "unit": "tablet",
+    "group": "Counted items",
+    "label": "Tablet",
+    "file": "tablet.svg",
+    "lowFile": "tablet-low.svg"
+  },
+  {
+    "unit": "capsule",
+    "group": "Counted items",
+    "label": "Capsules",
+    "file": "capsule.svg",
+    "lowFile": "capsule-low.svg"
+  },
+  {
+    "unit": "plaster",
+    "group": "Counted items",
+    "label": "Plasters",
+    "file": "plaster.svg",
+    "lowFile": "plaster-low.svg"
+  },
+  {
+    "unit": "stick",
+    "group": "Counted items",
+    "label": "Stick",
+    "file": "stick.svg",
+    "lowFile": "stick-low.svg"
+  },
+  {
+    "unit": "battery",
+    "group": "Counted items",
+    "label": "Battery",
+    "file": "battery.svg",
+    "lowFile": "battery-low.svg"
+  },
+  {
+    "unit": "bulb",
+    "group": "Counted items",
+    "label": "Bulb",
+    "file": "bulb.svg",
+    "lowFile": "bulb-low.svg"
+  },
+  {
+    "unit": "piece",
+    "group": "Counted items",
+    "label": "Piece",
+    "file": "piece.svg",
+    "lowFile": "piece-low.svg"
+  },
+  {
+    "unit": "set",
+    "group": "Counted items",
+    "label": "Set of three",
+    "file": "set.svg",
+    "lowFile": "set-low.svg"
+  },
+  {
+    "unit": "load",
+    "group": "Counted items",
+    "label": "Load",
+    "file": "load.svg",
+    "lowFile": "load-low.svg"
+  },
+  {
+    "unit": "dose",
+    "group": "Counted items",
+    "label": "Dose cup",
+    "file": "dose.svg",
+    "lowFile": "dose-low.svg"
+  }
+]
