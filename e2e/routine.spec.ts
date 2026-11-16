@@ -16,7 +16,7 @@ const STEPS = [
 ]
 
 test('shows the steps in order, then the extras, with how many are covered', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const section = routine(page)
   await expect(section.getByRole('heading', { name: 'Skincare Routine' })).toBeVisible()
   await expect(
@@ -27,7 +27,7 @@ test('shows the steps in order, then the extras, with how many are covered', asy
 })
 
 test('each item shows its status in words and an icon, not colour alone', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const section = routine(page)
   const eye = section.locator('li').filter({ hasText: 'Eye Cream' }).last()
   const chip = eye.getByText('Expired 12 days ago')
@@ -48,7 +48,7 @@ test('each item shows its status in words and an icon, not colour alone', async 
 })
 
 test('an empty step is a Gap card whose button adds a product to that step', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const section = routine(page)
   await expect(section.getByText('Gap', { exact: true })).toHaveCount(5)
 
@@ -71,7 +71,7 @@ test('an empty step is a Gap card whose button adds a product to that step', asy
 })
 
 test('with a search, steps without a match and gaps are hidden', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   await page.getByRole('searchbox').fill('cleans')
   const section = routine(page)
   await expect(section.getByText('Gap', { exact: true })).toHaveCount(0)
@@ -81,7 +81,7 @@ test('with a search, steps without a match and gaps are hidden', async ({ page }
 })
 
 test('shows under All and Personal Care, not under other sections', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const shelves = page.getByRole('tablist', { name: 'Shelves' })
   await shelves.getByRole('tab', { name: /Home Care/ }).click()
   await expect(routine(page)).toHaveCount(0)
@@ -90,7 +90,7 @@ test('shows under All and Personal Care, not under other sections', async ({ pag
 })
 
 test('routine controls are at least 44px', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const small = await routine(page)
     .locator('button')
     .evaluateAll((els) =>

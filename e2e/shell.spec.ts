@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('main actions are the same size: 168px on web, equal halves on phone', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const fill = await page.getByRole('button', { name: 'Fill my shelves' }).boundingBox()
   const shop = await page.getByRole('button', { name: 'Shop now' }).boundingBox()
   expect(fill && shop).toBeTruthy()
@@ -15,7 +15,7 @@ test('main actions are the same size: 168px on web, equal halves on phone', asyn
 })
 
 test('Shop now opens the Shopping tab', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const pages = page.getByRole('tablist', { name: 'Pages' })
   await expect(pages.getByRole('tab', { name: /Inventory/ })).toHaveAttribute(
     'aria-selected',
@@ -29,7 +29,7 @@ test('Shop now opens the Shopping tab', async ({ page }) => {
 })
 
 test('Fill my shelves opens its dialog, which closes back to the button', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const open = page.getByRole('button', { name: 'Fill my shelves' })
   await open.click()
   const dialog = page.getByRole('dialog', { name: 'Fill my shelves' })
@@ -40,7 +40,7 @@ test('Fill my shelves opens its dialog, which closes back to the button', async 
 })
 
 test('shelf sections are tabs, and the Filter button opens its panel', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const shelves = page.getByRole('tablist', { name: 'Shelves' })
   await shelves.getByRole('tab', { name: /Laundry/ }).click()
   await expect(shelves.getByRole('tab', { name: /Laundry/ })).toHaveAttribute(
@@ -55,7 +55,7 @@ test('shelf sections are tabs, and the Filter button opens its panel', async ({ 
 })
 
 test('the restock count in the summary sets the Show filter', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   await page.getByRole('button', { name: /to restock/ }).click()
   await expect(page.getByRole('button', { name: /Needs restocking/ })).toBeVisible()
 })

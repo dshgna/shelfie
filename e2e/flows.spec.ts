@@ -17,7 +17,7 @@ const reviewRow = (dialog: Locator, name: string): Locator =>
     .filter({ has: dialog.page().getByRole('button', { name: `Edit details of ${name}` }) })
 
 async function openReview(page: Page): Promise<Locator> {
-  await page.goto('/')
+  await page.goto('/app/')
   await page.getByRole('button', { name: 'Fill my shelves' }).click()
   const dialog = page.getByRole('dialog', { name: 'Fill my shelves' })
   await dialog.getByRole('textbox', { name: 'Order text' }).fill('Invented order: 2 things')
@@ -27,7 +27,7 @@ async function openReview(page: Page): Promise<Locator> {
 }
 
 test('adds a new item through the item editor', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   await page.getByRole('button', { name: 'Fill my shelves' }).click()
   const fill = page.getByRole('dialog', { name: 'Fill my shelves' })
   await fill.getByText('Add each item', { exact: true }).click()
@@ -57,7 +57,7 @@ test('adds a new item through the item editor', async ({ page }) => {
 })
 
 test('plus and minus change the count and the stock bar', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   // Kitchen Sponges: 0 left, so its bar follows the count.
   const sponges = row(page, 'Kitchen Sponges')
   const count = sponges.locator('[aria-live]')
@@ -89,7 +89,7 @@ test('plus and minus change the count and the stock bar', async ({ page }) => {
 })
 
 test('builds the shopping list from low stock and copies it', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/app/')
   const shopping = page.getByRole('tab', { name: /Shopping/ })
   await shopping.click()
   const panel = page.getByRole('tabpanel', { name: /Shopping/ })

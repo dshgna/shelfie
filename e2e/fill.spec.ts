@@ -5,7 +5,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 // Salts (returned).
 
 async function openFill(page: Page): Promise<Locator> {
-  await page.goto('/')
+  await page.goto('/app/')
   await page.getByRole('button', { name: 'Fill my shelves' }).click()
   return page.getByRole('dialog', { name: 'Fill my shelves' })
 }
