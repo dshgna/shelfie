@@ -76,7 +76,7 @@ export function Header({ query, onQueryChange, onShopNow, onFill }: HeaderProps)
         </svg>
         <Input
           placeholder="Search items, shelves or notes"
-          className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
+          className="-my-px min-w-0 flex-1 self-stretch bg-transparent text-base text-ink outline-none placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
         />
       </SearchField>
       <MainActions onFill={onFill} onShopNow={onShopNow} />

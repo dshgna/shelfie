@@ -170,7 +170,7 @@ export function AppShell({ repository, householdId }: AppShellProps) {
               }
             >
               Inventory
-              <span className="text-xs font-medium opacity-60">{items.length}</span>
+              <span className="text-xs font-medium">{items.length}</span>
             </Tab>
             <Tab
               id="shopping"
@@ -219,7 +219,7 @@ export function AppShell({ repository, householdId }: AppShellProps) {
                       <>
                         {isSelected && <Sprout />}
                         {label}
-                        <span className="font-body text-xs font-semibold opacity-75">{count}</span>
+                        <span className="font-body text-xs font-semibold">{count}</span>
                       </>
                     )}
                   </Tab>

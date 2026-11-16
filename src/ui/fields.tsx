@@ -21,6 +21,15 @@ import { CATEGORY_LABELS } from './shelf-view'
 
 export const FOCUS =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
+/**
+ * For React Aria Checkbox and Radio: the focused element is their visually hidden input, so
+ * :focus-visible never matches the label. React Aria marks the label with data-focus-visible.
+ */
+export const FOCUS_LABEL =
+  'data-focus-visible:outline-2 data-focus-visible:outline-offset-2 data-focus-visible:outline-accent'
+/** For ListBox options, drawn inside the option so the popover doesn't clip it. */
+export const FOCUS_RING =
+  'data-focus-visible:outline-2 data-focus-visible:outline-solid data-focus-visible:-outline-offset-2 data-focus-visible:outline-accent'
 export const INPUT = `min-h-[44px] w-full rounded-xl border border-edge bg-surface px-3 text-base text-ink data-invalid:border-danger ${FOCUS}`
 export const BUTTON = `inline-flex min-h-[44px] items-center justify-center rounded-xl border px-4 font-semibold ${FOCUS}`
 export const SECONDARY = `${BUTTON} border-edge bg-surface text-ink hover:bg-surface-2`
@@ -122,7 +131,7 @@ export function FieldSelect<T extends string>({
           {(option) => (
             <ListBoxItem
               id={option.id}
-              className="flex min-h-[44px] cursor-default items-center rounded-lg px-3 outline-none data-focused:bg-surface-2 data-selected:font-semibold"
+              className={`flex min-h-[44px] cursor-default items-center rounded-lg px-3 outline-none data-focused:bg-surface-2 data-selected:font-semibold ${FOCUS_RING}`}
             >
               {option.label}
             </ListBoxItem>

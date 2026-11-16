@@ -9,8 +9,8 @@
   "scripts": {
     "setup": "sh scripts/setup.sh",
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
+    "build": "tsc --noEmit && vite build && node scripts/build-site.mjs",
+    "preview": "node scripts/serve-dist.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/domain/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",

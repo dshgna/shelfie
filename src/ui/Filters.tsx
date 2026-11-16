@@ -75,7 +75,7 @@ function FilterSelect({
           {(option) => (
             <ListBoxItem
               id={option.id}
-              className="flex min-h-[44px] cursor-default items-center rounded-lg px-3 outline-none data-focused:bg-surface-2 data-selected:font-semibold data-selected:text-ink"
+              className="flex min-h-[44px] cursor-default items-center rounded-lg px-3 outline-none data-focus-visible:outline-2 data-focus-visible:-outline-offset-2 data-focus-visible:outline-accent data-focus-visible:outline-solid data-focused:bg-surface-2 data-selected:font-semibold data-selected:text-ink"
             >
               {option.label}
             </ListBoxItem>
@@ -134,7 +134,7 @@ export function Filters({
           onChange={(on) => set({ show: on ? 'attention' : 'all' })}
           className={({ isSelected }) => pill(isSelected)}
         >
-          Needs attention <span className="ml-1 text-[0.78rem] opacity-80">{attention}</span>
+          Needs attention <span className="ml-1 text-[0.78rem]">{attention}</span>
         </ToggleButton>
         <Button
           aria-expanded={panelOpen}
@@ -143,7 +143,7 @@ export function Filters({
           className={pill(panelOpen)}
         >
           Filter
-          {active > 0 && <span className="ml-1 text-[0.78rem] opacity-80">{active}</span>}
+          {active > 0 && <span className="ml-1 text-[0.78rem]">{active}</span>}
         </Button>
       </div>
       <div

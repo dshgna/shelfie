@@ -1,9 +1,10 @@
 import { Button } from 'react-aria-components'
 
 // Design rule 7: same size, white text; Fill my shelves on --accent, Shop now on --ink.
-// 168px each on web, equal halves on phone.
+// 168px each on web, equal halves on phone. The text is --surface: white in light mode, and the
+// dark surface in dark mode, where --accent and --ink are light (white on them fails contrast).
 const ACTION =
-  'inline-flex h-[44px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 font-semibold text-white md:w-[168px] md:flex-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-hovered:opacity-90'
+  'inline-flex h-[44px] min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 font-semibold text-surface md:w-[168px] md:flex-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent data-hovered:opacity-90'
 
 const ICON = {
   fill: 'none',

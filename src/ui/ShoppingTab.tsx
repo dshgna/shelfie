@@ -18,7 +18,7 @@ import {
   type ShoppingLine,
 } from './shopping'
 
-const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
+import { FOCUS, FOCUS_LABEL } from './fields'
 const BUTTON = `inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border px-4 font-semibold ${FOCUS}`
 const SECONDARY = `${BUTTON} border-edge bg-surface text-ink hover:bg-surface-2`
 const STEP = `grid size-[44px] flex-none place-items-center rounded-full border border-edge bg-surface text-ink hover:bg-surface-2 data-disabled:opacity-40 ${FOCUS}`
@@ -79,7 +79,7 @@ function Line({
         <Checkbox
           isSelected={checked}
           onChange={(on) => onCheckedChange(item.id, on)}
-          className={`group flex min-h-[44px] min-w-0 flex-1 cursor-default items-center gap-3 rounded-xl ${FOCUS}`}
+          className={`group flex min-h-[44px] min-w-0 flex-1 cursor-default items-center gap-3 rounded-xl ${FOCUS_LABEL}`}
         >
           {({ isSelected }) => (
             <>

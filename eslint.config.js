@@ -121,6 +121,16 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-imports': 'error',
     },
   },
+  {
+    // The landing page's scripts run in the browser as classic scripts (site/, no bundler).
+    files: ['site/**/*.js'],
+    languageOptions: { globals: globals.browser, sourceType: 'script' },
+  },
+  {
+    // Build and preview scripts run in Node.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: globals.node },
+  },
   indexedDbBlock,
   ...domainImportBlocks,
   {

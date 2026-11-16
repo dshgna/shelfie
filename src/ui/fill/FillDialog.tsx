@@ -29,7 +29,15 @@ import {
   type FormValues,
 } from '../item-form'
 import type { ItemRepository } from '../../storage/repository'
-import { BUTTON, CATEGORY_OPTIONS, FOCUS, Field, FieldSelect, SECONDARY } from '../fields'
+import {
+  BUTTON,
+  CATEGORY_OPTIONS,
+  FOCUS,
+  FOCUS_LABEL,
+  Field,
+  FieldSelect,
+  SECONDARY,
+} from '../fields'
 import { CATEGORY_LABELS } from '../shelf-view'
 import { readOrders } from './read-orders'
 import {
@@ -161,7 +169,7 @@ function OrdersStep({
             value={option.id}
             isDisabled={!option.now}
             className={({ isSelected, isDisabled }) =>
-              `group flex min-h-[44px] cursor-default items-center gap-3 rounded-xl border p-3 ${FOCUS} ${
+              `group flex min-h-[44px] cursor-default items-center gap-3 rounded-xl border p-3 ${FOCUS_LABEL} ${
                 isSelected ? 'border-accent bg-surface-2' : 'border-line bg-surface'
               } ${isDisabled ? 'text-muted' : ''}`
             }
@@ -421,7 +429,7 @@ function ReviewRowView({
           isSelected={row.include}
           onChange={(include) => onChange({ ...row, include })}
           aria-label={`Add ${draft.name}`}
-          className={`grid size-[44px] flex-none cursor-default place-items-center rounded-xl ${FOCUS}`}
+          className={`grid size-[44px] flex-none cursor-default place-items-center rounded-xl ${FOCUS_LABEL}`}
         >
           {({ isSelected }) => (
             <span
@@ -503,7 +511,7 @@ function ReviewRowView({
                   key={`${shelf.category}|${shelf.group}`}
                   value={`${shelf.category}|${shelf.group}`}
                   className={({ isSelected }) =>
-                    `inline-flex min-h-[44px] cursor-default items-center gap-1.5 rounded-full border px-3.5 text-sm ${FOCUS} ${
+                    `inline-flex min-h-[44px] cursor-default items-center gap-1.5 rounded-full border px-3.5 text-sm ${FOCUS_LABEL} ${
                       isSelected
                         ? 'border-2 border-sprout bg-eu-20 font-semibold text-sprout-deep'
                         : 'border-line bg-surface text-ink'
@@ -559,7 +567,7 @@ function ReviewRowView({
               onChange({ ...row, draft: { ...draft, mark: on ? 'return' : 'mine' } })
             }
             aria-label={`Gift or return: ${draft.name}`}
-            className={`group inline-flex min-h-[44px] cursor-default items-center gap-2 rounded-xl ${FOCUS}`}
+            className={`group inline-flex min-h-[44px] cursor-default items-center gap-2 rounded-xl ${FOCUS_LABEL}`}
           >
             {({ isSelected }) => (
               <>
