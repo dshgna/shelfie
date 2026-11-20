@@ -1,8 +1,10 @@
 // Landing page waitlist sign-up (Supabase edge function, Deno). The logic is in ./logic.ts and
-// tested with Vitest; this file only wires it to Deno and supabase-js.
+// tested with Vitest; this file only wires it to Deno and supabase-js. Results show on the
+// landing page itself (inline with JavaScript, or a 303 to a #message without it): see logic.ts.
 //
-// Environment: SITE_URL (set with `supabase secrets set`), plus SUPABASE_URL and
-// SUPABASE_SERVICE_ROLE_KEY, which Supabase provides to every function. No key is in this repo.
+// Environment: SITE_URL (the landing page's origin, set with `supabase secrets set`), plus
+// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, which Supabase provides to every function. No key is
+// in this repo.
 // Deployed with JWT verification off (supabase/config.toml), because a plain HTML form posts here.
 //
 // Privacy: never log email addresses, request bodies, database error details or the key.

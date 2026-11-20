@@ -3,9 +3,15 @@
  * Vitest can test it. No Deno, Node or Supabase imports here: only web standards (Request,
  * Response, URL, URLSearchParams, TextDecoder) that both runtimes have.
  *
- * A plain HTML form (no JavaScript, no login) posts `email` and `website` (a honeypot) as
- * application/x-www-form-urlencoded. The database function public.signup_add does the storing,
- * deduplication and rate limiting; this only checks the request and maps the result to a redirect.
+ * The landing page (site/index.html) has two sign-up forms. Each posts `email`, `website` (a
+ * honeypot) and `form` (which form: 'hero' or 'end') as application/x-www-form-urlencoded. The
+ * result always shows on the landing page itself, under the form that was used:
+ *  - With JavaScript, site/site-assets/signup.js posts with fetch and `Accept: application/json`
+ *    and gets `{"result": "..."}` back (CORS allows SITE_URL only), then shows the message inline.
+ *  - Without JavaScript, the browser posts the form and gets a 303 back to
+ *    `${SITE_URL}/#signup-<form>-<result>`, and the page's CSS shows that message (`:target`).
+ *
+ * The database function public.signup_add does the storing, deduplication and rate limiting.
  *
  * Privacy: never log an email address, a request body or a key. Responses carry no detail.
  */
@@ -22,8 +28,28 @@ export const MAX_BODY_BYTES = 2048
 /** What public.signup_add returns. */
 export type SignupResult = 'ok' | 'invalid' | 'rate_limited'
 
+/** What the landing page is told: the database's answer, or 'error' when something failed. */
+export type SignupOutcome = SignupResult | 'error'
+
 /** Calls public.signup_add; index.ts passes the supabase-js version, tests a fake. */
 export type SignupRpc = (email: string, notice: string) => Promise<SignupResult>
+
+/** The landing page's sign-up forms, as sent in the `form` field. Anything else counts as 'hero'. */
+export const SIGNUP_FORMS = ['hero', 'end'] as const
+export type SignupForm = (typeof SIGNUP_FORMS)[number]
+
+/** The id of the message the landing page shows, e.g. `signup-hero-ok`. */
+export function messageId(form: SignupForm, outcome: SignupOutcome): string {
+  return `signup-${form}-${outcome.replace('_', '-')}`
+}
+
+/** JSON status per outcome, for the script on the landing page. */
+const JSON_STATUS: Record<SignupOutcome, number> = {
+  ok: 200,
+  invalid: 400,
+  rate_limited: 429,
+  error: 500,
+}
 
 const BASE_HEADERS: Record<string, string> = {
   'Cache-Control': 'no-store',
@@ -33,11 +59,6 @@ const BASE_HEADERS: Record<string, string> = {
 /** An empty response with the headers every response carries. */
 export function emptyResponse(status: number, extra: Record<string, string> = {}): Response {
   return new Response(null, { status, headers: { ...BASE_HEADERS, ...extra } })
-}
-
-/** A 303 to an absolute URL on the landing page. */
-export function redirectTo(siteUrl: string, path: '/thanks/' | '/signup-error/'): Response {
-  return emptyResponse(303, { Location: `${siteUrl}${path}` })
 }
 
 /**
@@ -83,15 +104,27 @@ export function isValidEmail(email: string): boolean {
   return TOP_LEVEL.test(labels.at(-1) ?? '')
 }
 
-/** The form's two fields; missing fields are empty strings. */
-export function parseForm(body: string): { email: string; website: string } {
-  const form = new URLSearchParams(body)
-  return { email: form.get('email') ?? '', website: form.get('website') ?? '' }
+/** The form's fields; missing fields are empty strings, an unknown `form` is 'hero'. */
+export function parseForm(body: string): { email: string; website: string; form: SignupForm } {
+  const fields = new URLSearchParams(body)
+  const form = fields.get('form')
+  return {
+    email: fields.get('email') ?? '',
+    website: fields.get('website') ?? '',
+    form: SIGNUP_FORMS.find((name) => name === form) ?? 'hero',
+  }
 }
 
 /** True for application/x-www-form-urlencoded, with or without parameters such as charset. */
 export function isFormContentType(value: string | null): boolean {
   return value?.split(';')[0]?.trim().toLowerCase() === 'application/x-www-form-urlencoded'
+}
+
+/** True when the landing page's script asked for JSON; a plain form post asks for HTML. */
+export function wantsJson(accept: string | null): boolean {
+  return (accept ?? '')
+    .split(',')
+    .some((type) => type.split(';')[0]?.trim().toLowerCase() === 'application/json')
 }
 
 /**
@@ -129,22 +162,32 @@ export async function readBodyLimited(
   }
 }
 
-/** Maps what public.signup_add returned to the response. Anything unexpected is a 500. */
-export function responseForResult(siteUrl: string, result: unknown): Response {
-  switch (result) {
-    case 'ok':
-      return redirectTo(siteUrl, '/thanks/')
-    case 'invalid':
-      return redirectTo(siteUrl, '/signup-error/')
-    case 'rate_limited':
-      return emptyResponse(429)
-    default:
-      return emptyResponse(500)
+/** What public.signup_add returned, as an outcome. Anything unexpected is 'error'. */
+export function outcomeFor(result: unknown): SignupOutcome {
+  return result === 'ok' || result === 'invalid' || result === 'rate_limited' ? result : 'error'
+}
+
+/** Where the request came from and how it wants the answer. */
+interface Reply {
+  siteUrl: string
+  json: boolean
+  form: SignupForm
+}
+
+/** The answer for an outcome: JSON for the script, or a 303 back to the message on the page. */
+export function respond({ siteUrl, json, form }: Reply, outcome: SignupOutcome): Response {
+  const cors = { 'Access-Control-Allow-Origin': siteUrl, Vary: 'Origin, Accept' }
+  if (json) {
+    return new Response(JSON.stringify({ result: outcome }), {
+      status: JSON_STATUS[outcome],
+      headers: { ...BASE_HEADERS, ...cors, 'Content-Type': 'application/json' },
+    })
   }
+  return emptyResponse(303, { ...cors, Location: `${siteUrl}/#${messageId(form, outcome)}` })
 }
 
 export interface SignupEnv {
-  /** SITE_URL from the function's environment. */
+  /** SITE_URL from the function's environment: the landing page's origin. */
   siteUrl: string | undefined
   /** Calls public.signup_add, or null when the Supabase settings are missing. */
   rpc: SignupRpc | null
@@ -152,34 +195,36 @@ export interface SignupEnv {
 
 /**
  * The whole request flow. The order matters:
- *  1. SITE_URL must be valid, or 500 and nothing else happens.
- *  2. Only POST (405), only form-encoded (400), only bodies under 2 KB (400).
- *  3. A filled-in honeypot gets the same redirect as a real sign-up, and nothing is stored.
- *  4. An address that fails the check goes to /signup-error/ without calling the database.
+ *  1. SITE_URL must be valid, or 500 and nothing else happens (there is nowhere to send people).
+ *  2. Only POST (405), only form-encoded (400), only bodies under 2 KB (400). No detail.
+ *  3. A filled-in honeypot gets the same answer as a real sign-up, and nothing is stored.
+ *  4. An address that fails the check is 'invalid' without calling the database.
  *  5. Otherwise signup_add decides. A repeated address returns 'ok' like a new one, so the
- *     response never shows who has signed up.
+ *     response never shows who has signed up. A failed call is 'error'.
  */
 export async function handleSignup(request: Request, env: SignupEnv): Promise<Response> {
   const siteUrl = parseSiteUrl(env.siteUrl)
   if (siteUrl === null) return emptyResponse(500)
+  const cors = { 'Access-Control-Allow-Origin': siteUrl, Vary: 'Origin, Accept' }
 
-  if (request.method !== 'POST') return emptyResponse(405, { Allow: 'POST' })
-  if (!isFormContentType(request.headers.get('content-type'))) return emptyResponse(400)
+  if (request.method !== 'POST') return emptyResponse(405, { ...cors, Allow: 'POST' })
+  if (!isFormContentType(request.headers.get('content-type'))) return emptyResponse(400, cors)
   const declared = Number(request.headers.get('content-length') ?? '0')
-  if (!Number.isFinite(declared) || declared >= MAX_BODY_BYTES) return emptyResponse(400)
+  if (!Number.isFinite(declared) || declared >= MAX_BODY_BYTES) return emptyResponse(400, cors)
   const body = await readBodyLimited(request.body)
-  if (body === null) return emptyResponse(400)
+  if (body === null) return emptyResponse(400, cors)
 
-  const { email, website } = parseForm(body)
-  if (website !== '') return redirectTo(siteUrl, '/thanks/')
+  const { email, website, form } = parseForm(body)
+  const reply: Reply = { siteUrl, json: wantsJson(request.headers.get('accept')), form }
+  if (website !== '') return respond(reply, 'ok')
 
   const normalised = normaliseEmail(email)
-  if (!isValidEmail(normalised)) return redirectTo(siteUrl, '/signup-error/')
+  if (!isValidEmail(normalised)) return respond(reply, 'invalid')
 
-  if (env.rpc === null) return emptyResponse(500)
+  if (env.rpc === null) return respond(reply, 'error')
   try {
-    return responseForResult(siteUrl, await env.rpc(normalised, NOTICE_VERSION))
+    return respond(reply, outcomeFor(await env.rpc(normalised, NOTICE_VERSION)))
   } catch {
-    return emptyResponse(500)
+    return respond(reply, 'error')
   }
 }

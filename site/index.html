@@ -26,6 +26,7 @@
     />
     <link rel="stylesheet" href="/site-assets/site.css" />
     <script src="/site-assets/local-price.js" defer></script>
+    <script src="/site-assets/signup.js" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -90,6 +91,76 @@
                 Privacy Focused
               </li>
             </ul>
+            <div class="signup signup--hero" data-signup>
+              <form
+                class="signup-form"
+                action="https://ogyuvrcixtwbtjbuhljz.supabase.co/functions/v1/signup"
+                method="post"
+              >
+                <input type="hidden" name="form" value="hero" />
+                <div class="signup-field">
+                  <label for="email-hero">Register your interest</label>
+                  <input
+                    id="email-hero"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="you@example.com"
+                    maxlength="254"
+                    required
+                    aria-describedby="signup-hero-notice signup-hero-status"
+                  />
+                </div>
+                <div class="signup-trap" aria-hidden="true">
+                  <label for="website-hero">Leave this empty</label>
+                  <input
+                    id="website-hero"
+                    name="website"
+                    type="text"
+                    tabindex="-1"
+                    autocomplete="off"
+                  />
+                </div>
+                <button class="btn" type="submit">Notify me</button>
+              </form>
+              <p class="signup-notice" id="signup-hero-notice">
+                We'll only use your email to tell you when Shelfie launches, then delete it.
+                <a href="#privacy">Privacy</a>
+              </p>
+              <p class="signup-status" id="signup-hero-status" role="status" data-signup-status></p>
+              <p
+                class="signup-result signup-result--ok"
+                id="signup-hero-ok"
+                data-result="ok"
+                tabindex="-1"
+              >
+                You're on the list. We'll email you when Shelfie launches.
+              </p>
+              <p
+                class="signup-result signup-result--problem"
+                id="signup-hero-invalid"
+                data-result="invalid"
+                tabindex="-1"
+              >
+                That email address doesn't look right. Please check it and try again.
+              </p>
+              <p
+                class="signup-result signup-result--problem"
+                id="signup-hero-rate-limited"
+                data-result="rate_limited"
+                tabindex="-1"
+              >
+                Lots of sign-ups right now. Please try again in a few minutes.
+              </p>
+              <p
+                class="signup-result signup-result--problem"
+                id="signup-hero-error"
+                data-result="error"
+                tabindex="-1"
+              >
+                Something went wrong. Please try again later.
+              </p>
+            </div>
             <ul class="pills" aria-label="Planned launch dates">
               <li class="pill-now"><strong>Web app</strong>&nbsp;· 4 Jan 2027</li>
               <li class="pill-now"><strong>iPhone and Android</strong>&nbsp;· 10 Jan 2027</li>
@@ -487,6 +558,76 @@
             <li class="pill-now"><strong>Web app</strong>&nbsp;· 4 Jan 2027</li>
             <li class="pill-now"><strong>iPhone and Android</strong>&nbsp;· 10 Jan 2027</li>
           </ul>
+          <div class="signup signup--end" data-signup>
+            <form
+              class="signup-form"
+              action="https://ogyuvrcixtwbtjbuhljz.supabase.co/functions/v1/signup"
+              method="post"
+            >
+              <input type="hidden" name="form" value="end" />
+              <div class="signup-field">
+                <label for="email-end">Register your interest</label>
+                <input
+                  id="email-end"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="you@example.com"
+                  maxlength="254"
+                  required
+                  aria-describedby="signup-end-notice signup-end-status"
+                />
+              </div>
+              <div class="signup-trap" aria-hidden="true">
+                <label for="website-end">Leave this empty</label>
+                <input
+                  id="website-end"
+                  name="website"
+                  type="text"
+                  tabindex="-1"
+                  autocomplete="off"
+                />
+              </div>
+              <button class="btn" type="submit">Notify me</button>
+            </form>
+            <p class="signup-notice" id="signup-end-notice">
+              We'll only use your email to tell you when Shelfie launches, then delete it.
+              <a href="#privacy">Privacy</a>
+            </p>
+            <p class="signup-status" id="signup-end-status" role="status" data-signup-status></p>
+            <p
+              class="signup-result signup-result--ok"
+              id="signup-end-ok"
+              data-result="ok"
+              tabindex="-1"
+            >
+              You're on the list. We'll email you when Shelfie launches.
+            </p>
+            <p
+              class="signup-result signup-result--problem"
+              id="signup-end-invalid"
+              data-result="invalid"
+              tabindex="-1"
+            >
+              That email address doesn't look right. Please check it and try again.
+            </p>
+            <p
+              class="signup-result signup-result--problem"
+              id="signup-end-rate-limited"
+              data-result="rate_limited"
+              tabindex="-1"
+            >
+              Lots of sign-ups right now. Please try again in a few minutes.
+            </p>
+            <p
+              class="signup-result signup-result--problem"
+              id="signup-end-error"
+              data-result="error"
+              tabindex="-1"
+            >
+              Something went wrong. Please try again later.
+            </p>
+          </div>
         </div>
       </section>
     </main>

@@ -44,21 +44,28 @@ export const appHeaders: Record<string, string> = {
 }
 
 /**
- * Placeholders for the landing page's two outside services. They stay null until the owner
- * confirms the providers; then each becomes one https origin (for example 'https://host.example'),
- * and the pinned lists in src/security-headers.test.ts change with it. Never guess one.
+ * The landing page's two outside services, each one exact https origin or null while the owner
+ * has not chosen it. When one changes, the pinned lists in src/security-headers.test.ts change
+ * with it. Never guess one.
+ *  - Analytics: not chosen yet.
+ *  - Sign-up: the Supabase project that runs the `signup` edge function (owner, 16 Nov 2026).
+ *    The landing page's forms post to `${SITE_SIGNUP_ORIGIN}${SIGNUP_FUNCTION_PATH}`, without
+ *    JavaScript (form-action) or from site/site-assets/signup.js (connect-src).
  */
 export const SITE_ANALYTICS_ORIGIN: string | null = null
-export const SITE_SIGNUP_ORIGIN: string | null = null
+export const SITE_SIGNUP_ORIGIN: string | null = 'https://ogyuvrcixtwbtjbuhljz.supabase.co'
 
-/** The outside origins the landing page may contact: only the placeholders that are set. */
-const sitePlaceholders: (string | null)[] = [SITE_ANALYTICS_ORIGIN, SITE_SIGNUP_ORIGIN]
-export const siteExtraOrigins: string[] = sitePlaceholders.filter(
+/** Where the sign-up edge function lives on SITE_SIGNUP_ORIGIN. */
+export const SIGNUP_FUNCTION_PATH = '/functions/v1/signup'
+
+/** The outside origins the landing page may contact: only the ones that are set. */
+const siteServices: (string | null)[] = [SITE_ANALYTICS_ORIGIN, SITE_SIGNUP_ORIGIN]
+export const siteExtraOrigins: string[] = siteServices.filter(
   (origin): origin is string => origin !== null,
 )
 
-function sources(base: string, extra: string | null): string {
-  return extra === null ? base : `${base} ${extra}`
+function sources(base: string, ...extra: (string | null)[]): string {
+  return [base, ...extra.filter((origin): origin is string => origin !== null)].join(' ')
 }
 
 /**
@@ -72,7 +79,7 @@ export const siteHeaders: Record<string, string> = {
     "style-src 'self'",
     "img-src 'self'",
     "font-src 'self'",
-    `connect-src ${sources("'self'", SITE_ANALYTICS_ORIGIN)}`,
+    `connect-src ${sources("'self'", SITE_ANALYTICS_ORIGIN, SITE_SIGNUP_ORIGIN)}`,
     `form-action ${sources("'self'", SITE_SIGNUP_ORIGIN)}`,
     "base-uri 'none'",
     "object-src 'none'",

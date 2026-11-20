@@ -68,6 +68,7 @@
   --coral: #e0694f;
   --warn: #9a5200;
   --sprout-deep: #276b43;
+  --danger: #b3261e;
   --eu-20: color-mix(in srgb, #82b5a3 20%, #fff);
   --wood-45: color-mix(in srgb, #cfa57c 45%, #fff);
 
@@ -338,6 +339,8 @@ h3,
   color: var(--muted);
   max-width: 560px;
 }
+.hero-copy .signup,
+.hero-copy .signup + .pills,
 .hero-copy .pills + .pills {
   margin-top: 28px;
 }
@@ -679,6 +682,141 @@ h3,
   background: var(--surface);
   border-color: var(--surface);
   color: var(--accent);
+}
+
+/* Sign-up forms (hero and closing). Results show under the form: written by signup.js into
+   the live region, or, without JavaScript, the [data-result] paragraph the function's redirect
+   points at (#signup-<form>-<result>), shown with :target. */
+.signup {
+  max-width: 520px;
+}
+.closing .signup {
+  margin: 24px auto 0;
+  text-align: left;
+}
+.signup-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+.signup-field {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.signup-field label {
+  font-size: 15px;
+  font-weight: 600;
+}
+.signup-field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 2px solid var(--edge);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+}
+.closing .signup-field input {
+  border-color: var(--eu);
+}
+.signup-field input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--surface);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--shadow);
+}
+.btn:hover {
+  background: var(--ink);
+}
+.closing .btn {
+  padding: 0 22px;
+  background: var(--ink);
+  font-size: 16px;
+}
+.btn[aria-disabled='true'] {
+  cursor: progress;
+}
+.closing :focus-visible {
+  outline-color: var(--surface);
+}
+/* The honeypot: out of sight and out of the tab order; people never fill it in. */
+.signup-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.signup .signup-notice {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.closing .signup .signup-notice {
+  color: var(--surface);
+}
+.signup-notice a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+.closing .signup-notice a {
+  color: var(--surface);
+}
+.signup .signup-status,
+.signup .signup-result {
+  margin: 8px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--danger);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  scroll-margin-top: 24px;
+}
+.signup .signup-status[data-result='ok'],
+.signup .signup-result--ok {
+  border-left-color: var(--sprout-deep);
+}
+/* An empty live region keeps no box but stays rendered, so screen readers hear its first message. */
+.signup .signup-status:empty {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.signup-result {
+  display: none;
+}
+.signup-result:target {
+  display: block;
+}
+/* The browser moves focus to the message it scrolled to, so screen readers start there; it is
+   not a control, so it gets no focus ring. */
+.signup-result:focus {
+  outline: none;
 }
 
 /* Footer */
