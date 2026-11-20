@@ -1,4 +1,4 @@
-// These functions assume dates were validated at the boundary (validateItem, import, migration).
+// These functions assume dates were validated at the boundary (validateItem, import).
 // They throw rather than guess.
 //
 // Calendar-date helpers, ported from the prototype's startOfToday, plusDays, addDays and daysUntil.

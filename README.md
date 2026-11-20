@@ -53,7 +53,7 @@ docs/                 decision log; architecture, data model, threat model, priv
 src/                  app code (main.tsx, App.tsx, styles.css), built to dist/app and served at /app/
 site/                 landing page (static HTML and CSS, one small script), copied to the root of dist/ and served at /
 src/storage/          on-device database (IndexedDB through Dexie) and first-run setup; tests in src/storage/testing/
-supabase/             migrations and edge functions (step 5 onward)
+supabase/             edge functions; no migration files yet (the encrypted-records tables and their migrations come when sync is built)
 security-headers.ts   one source of truth for CSP etc. (preview server + dist/_headers): app and landing page sets
 e2e/                  Playwright tests (run against the production build)
 design/tokens.json    colours, fonts and fixed copy, mirrored from the design system

@@ -8,8 +8,9 @@ import type { IsoDate, IsoDateTime } from './dates'
 export type { IsoDate }
 
 /**
- * The shape version of every stored record: items, users and households all share it. Bump it
- * whenever the stored shape of any of them changes, and add a migration for each record type.
+ * The shape version of every stored record: items, users and households all share it. Until the
+ * app is live it stays at 1 and the shape is changed in place. From launch, any change to a stored
+ * shape bumps it and adds a migration for each record type.
  */
 export const CURRENT_SCHEMA_VERSION = 1
 
@@ -21,8 +22,8 @@ export type Link = string
 
 /**
  * Shelfie's 9 categories, in the prototype's display order. The prototype also has 'basics'
- * (Household Basics), which was removed here on purpose: migrations.ts moves those items to
- * 'household', keeping their group.
+ * (Household Basics), which was removed here on purpose. The prototype importer, when it exists,
+ * decides where those items go.
  */
 export const CATEGORIES = [
   'skincare',

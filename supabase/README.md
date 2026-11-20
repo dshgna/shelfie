@@ -1,8 +1,10 @@
 # Supabase
 
-Created in step 5 with `supabase init`. Planned contents:
+Created with `supabase init`. It holds edge functions only for now: no migration files exist yet. The waitlist table and function were created by hand (see `signup` below).
 
-- `migrations/` - tables for encrypted records (ciphertext, nonce, `updated_at`, deletion marker) with row-level security so each user can only reach their own rows.
+Planned contents:
+
+- The encrypted-records tables (ciphertext, nonce, `updated_at`, deletion marker, with row-level security so each user can only reach their own rows) and their migrations, added when sync is built.
 - `functions/ai-import/` - the AI proxy: requires login, rate-limits per user, enforces a monthly spend cap, keeps no logs or content. Its provider key lives in function secrets (`supabase secrets set`), never in this repo.
 
 Use two projects, one for development and one for production, each with its own keys.
@@ -16,7 +18,7 @@ Use two projects, one for development and one for production, each with its own 
 - With JavaScript (`site/site-assets/signup.js`, `Accept: application/json`): JSON `{"result": "ok" | "invalid" | "rate_limited" | "error"}` with status 200, 400, 429 or 500, and `Access-Control-Allow-Origin: <SITE_URL>`.
 - Without JavaScript (a plain form post): `303` to `<SITE_URL>/#signup-<form>-<result>` (for example `#signup-hero-ok`, `#signup-end-rate-limited`), where the page shows the matching message.
 
-A missing or invalid `SITE_URL` is a bare `500`. The logic is in `logic.ts`, tested by Vitest (`logic.test.ts`); `index.ts` is the Deno entry point. JWT verification is off for this function only (`config.toml`). The table `marketing.signup_emails` and `public.signup_add` come from the owner's own migration. The landing page's CSP allows this project's origin (`SITE_SIGNUP_ORIGIN` in `security-headers.ts`) for `form-action` and `connect-src`.
+A missing or invalid `SITE_URL` is a bare `500`. The logic is in `logic.ts`, tested by Vitest (`logic.test.ts`); `index.ts` is the Deno entry point. JWT verification is off for this function only (`config.toml`). The table `marketing.signup_emails` and `public.signup_add` were created by hand by the owner; there is no migration file for them. The landing page's CSP allows this project's origin (`SITE_SIGNUP_ORIGIN` in `security-headers.ts`) for `form-action` and `connect-src`.
 
 Deploy (dev project first, then production):
 

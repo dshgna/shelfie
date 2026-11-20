@@ -8,9 +8,8 @@
 import { describe, expect, it } from 'vitest'
 import { daysUntil, plusDays } from '../dates'
 import type { Item, ReorderRule } from '../item'
-import { migrateToCurrent } from '../migrations'
 import { STATUSES, status } from '../status'
-import { NOW, TODAY, makeItem } from './helpers/fixtures'
+import { TODAY, makeItem } from './helpers/fixtures'
 import { normalizeItem, validateItem } from '../validate'
 
 /** Every calendar day from `first` to `last`, both included. */
@@ -101,25 +100,6 @@ describe('invariants', () => {
       }
     }
     expect(failures).toEqual([])
-  })
-
-  it('migrateToCurrent returns already-current items unchanged, however often it runs', () => {
-    // Current items as storage would hold them: normalised, with unique ids.
-    const stored = itemGrid().map(normalizeItem)
-    const first = migrateToCurrent(stored, {
-      today: TODAY,
-      householdId: 'test-household',
-      now: NOW,
-    })
-    expect(first.removed).toEqual([])
-    expect(first.items.map((entry) => entry.item)).toEqual(stored)
-    expect(first.items.every((entry) => entry.from === 'schema-1')).toBe(true)
-
-    const second = migrateToCurrent(
-      first.items.map((entry) => entry.item),
-      { today: TODAY, householdId: 'test-household', now: NOW },
-    )
-    expect(second.items.map((entry) => entry.item)).toEqual(stored)
   })
 
   it('status only ever returns one of the five states, across a grid of items and dates', () => {

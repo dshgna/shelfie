@@ -9,7 +9,8 @@ import type { ItemRepository } from '../storage/repository'
  * change was saved (or there was nothing to change) and false when it couldn't be. Following
  * repository.ts:
  * - it reads the stored item fresh, so it never saves over a newer copy with a stale one;
- * - it keeps `schemaVersion` as stored and refuses to write an item at another version;
+ * - it keeps `schemaVersion` as stored and refuses to write an item whose schema version is not
+ *   CURRENT_SCHEMA_VERSION;
  * - it runs normalizeItem (which clears the start date when none are left) and validateItem
  *   first, because `put` doesn't validate;
  * - `put` stamps `updatedAt` from the clock.
@@ -26,7 +27,9 @@ export function useChangeQuantity(repository: ItemRepository) {
         const quantity = Math.max(0, item.quantity + delta)
         if (quantity === item.quantity) return true
         if (item.schemaVersion !== CURRENT_SCHEMA_VERSION) {
-          throw new Error(`item ${id} is at schema version ${item.schemaVersion}, not migrated`)
+          throw new Error(
+            `item ${id} has schema version ${item.schemaVersion}, expected ${CURRENT_SCHEMA_VERSION}`,
+          )
         }
         const next = normalizeItem({ ...item, quantity })
         const issues = validateItem(next)

@@ -1,6 +1,6 @@
 // The shelf sections shown as pill tabs under Inventory, ported from the prototype's SECTIONS.
 // The prototype's "Household Basics" section is left out: its only category ('basics') was removed
-// from the domain, and migrations.ts moves those items to 'household' (Home Care).
+// from the domain on purpose. The prototype importer, when it exists, decides where those items go.
 
 import type { Category } from '../domain/item'
 
