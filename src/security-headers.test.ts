@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   APP_BASE,
   SITE_ANALYTICS_ORIGIN,
+  SITE_ANALYTICS_SCRIPT,
   SITE_SIGNUP_ORIGIN,
   appHeaders,
   headerRules,
@@ -77,30 +78,41 @@ describe('app security headers', () => {
 })
 
 describe('landing page security headers', () => {
-  it('pins the exact policy, with both placeholders still empty', () => {
+  const SIGNUP = 'https://ogyuvrcixtwbtjbuhljz.supabase.co'
+  const ANALYTICS = 'https://gateway.umami.is'
+  const UMAMI_SCRIPT = 'https://cloud.umami.is/script.js'
+
+  it('pins the exact policy: the Umami script, analytics and sign-up connections, sign-up forms', () => {
     expect(directives(siteCsp)).toEqual({
       'default-src': ["'none'"],
-      'script-src': ["'self'"],
+      'script-src': ["'self'", UMAMI_SCRIPT],
       'style-src': ["'self'"],
       'img-src': ["'self'"],
       'font-src': ["'self'"],
-      'connect-src': ["'self'"],
-      'form-action': ["'self'"],
+      'connect-src': ["'self'", ANALYTICS, SIGNUP],
+      'form-action': ["'self'", SIGNUP],
       'base-uri': ["'none'"],
       'object-src': ["'none'"],
       'frame-ancestors': ["'none'"],
     })
   })
 
-  it('has no analytics or sign-up origin until the owner confirms the providers', () => {
-    // When a provider is confirmed, set it in security-headers.ts and pin it here and above.
-    expect(SITE_ANALYTICS_ORIGIN).toBeNull()
-    expect(SITE_SIGNUP_ORIGIN).toBeNull()
-    expect(siteExtraOrigins).toEqual([])
+  it('has exactly the owner-chosen analytics and sign-up origins', () => {
+    // When a provider changes, set it in security-headers.ts and pin it here and above.
+    expect(SITE_SIGNUP_ORIGIN).toBe(SIGNUP)
+    expect(SITE_ANALYTICS_ORIGIN).toBe(ANALYTICS)
+    expect(SITE_ANALYTICS_SCRIPT).toBe(UMAMI_SCRIPT)
+    expect(siteExtraOrigins).toEqual(['https://cloud.umami.is', ANALYTICS, SIGNUP])
   })
 
-  it('allows no inline code, no data: or blob: URLs and no other origins', () => {
+  it('keeps every outside origin an exact https origin', () => {
+    for (const origin of siteExtraOrigins) expect(new URL(origin).origin).toBe(origin)
+    for (const origin of siteExtraOrigins) expect(origin).toMatch(/^https:\/\/[a-z0-9.-]+$/)
+  })
+
+  it('allows no inline code, no data: or blob: URLs and no origins beyond those', () => {
     for (const source of siteCsp.split(/[ ;]+/)) {
+      if (siteExtraOrigins.includes(source) || source === UMAMI_SCRIPT) continue
       expect(source).not.toMatch(/unsafe-|^data:|^blob:|^https?:|^wss?:|\*/)
     }
   })

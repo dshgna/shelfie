@@ -3,11 +3,12 @@
 //
 // Two kinds of version, which change for different reasons:
 // - Dexie's database version (the number in `this.version(1)` below) describes the tables and
-//   their indexes. It changes when a table or index is added, removed or changed: add
-//   `this.version(2).stores(...)` with an `.upgrade(...)` function beside version 1. Never edit
-//   version 1 once real data exists, because devices that already have it would not be upgraded.
-// - The `schemaVersion` on each record describes the shape of that record's data. It changes when
-//   a field is added, renamed or reshaped, and comes with a migration in src/domain.
+//   their indexes.
+// - The `schemaVersion` on each record describes the shape of that record's data.
+// Until launch, no real data exists, so the schema is changed in place: both stay at 1 and version
+// 1 is edited directly. From launch, any change bumps schemaVersion and the Dexie version
+// (`this.version(2).stores(...)` with an `.upgrade(...)` function beside version 1, which is then
+// never edited again) and adds a migration.
 //
 // Indexes:
 // - `deleted` is not indexed on purpose. IndexedDB cannot use true or false as a key, so every

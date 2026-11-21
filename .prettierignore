@@ -9,3 +9,5 @@ design/app-screens/
 ios
 android
 package-lock.json
+# Landing page design downloads: a reference, kept exactly as downloaded
+design/landing-page/

@@ -95,6 +95,19 @@ html {
   text-size-adjust: 100%;
 }
 
+/* Visually hidden, still read by screen readers (the sign-up forms' labels). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
@@ -200,9 +213,12 @@ h3,
   --min: 230px;
   gap: 18px;
 }
-.grid--220 {
-  --min: 220px;
-  gap: 18px;
+.grid--190 {
+  --min: 190px;
+  gap: 16px;
+}
+.grid--200 {
+  --min: 200px;
 }
 
 /* Lists that are only a layout */
@@ -263,8 +279,12 @@ h3,
 }
 
 /* Header */
+/* A white bar at the top of the page; it scrolls away with the page (not sticky). */
 .site-header {
-  padding: 14px var(--gutter);
+  padding: 10px var(--gutter);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 2px 8px var(--shadow-soft);
 }
 .site-header .wrap {
   display: flex;
@@ -315,7 +335,7 @@ h3,
   padding: 56px var(--gutter) 72px;
   /* Botanical leaves in the top-right corner, drawn behind the text. */
   background:
-    url('leaves/leaves-top-right.svg') no-repeat top right / 270px auto,
+    url('leaves/leaves-top-right.svg') no-repeat top right / 320px 320px,
     linear-gradient(180deg, var(--hero-top), var(--hero-bottom));
 }
 .hero .wrap {
@@ -334,15 +354,20 @@ h3,
   line-height: 1.04;
 }
 .lead {
-  margin: 0 0 16px;
+  margin: 0 0 28px;
   font-size: 20px;
   color: var(--muted);
   max-width: 560px;
 }
-.hero-copy .signup,
-.hero-copy .signup + .pills,
-.hero-copy .pills + .pills {
+.hero-copy .signup + .pills {
   margin-top: 28px;
+}
+.pills--center {
+  justify-content: center;
+}
+/* The value pills sit 14px below the toothpaste chip (the column's gap is 16px). */
+.hero-art .pills--center {
+  margin-top: -2px;
 }
 .hero-art {
   flex: 1 1 340px;
@@ -356,7 +381,10 @@ h3,
   width: 300px;
 }
 
-/* Sound familiar? */
+/* Sounds familiar? */
+#fam-h {
+  font-size: clamp(26px, 3.1vw, 38px);
+}
 .card--moment {
   text-align: left;
 }
@@ -364,7 +392,7 @@ h3,
   height: 52px;
   display: flex;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 2px;
   margin-bottom: 14px;
 }
@@ -416,6 +444,9 @@ h3,
   text-transform: uppercase;
   vertical-align: 2px;
 }
+.badge.badge--inline {
+  margin-right: 0;
+}
 .phone {
   margin: auto auto 0;
   padding-top: 18px;
@@ -441,38 +472,21 @@ h3,
 }
 
 /* Every cupboard */
-.card--shelf img,
-.card--privacy img,
-.card--privacy svg {
+.shelf-icon {
   display: block;
 }
 
-/* Greener home */
-.greener .wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 48px;
-  align-items: flex-end;
-}
-.greener-copy {
-  flex: 1 1 460px;
-  min-width: 0;
-}
+/* Greener home: three facts in a row; at 600px and below, two (the last one full width). */
 .greener h2 {
-  margin-bottom: 14px;
-}
-.greener-copy > p:not(.eyebrow) {
-  margin: 0 0 24px;
-  color: var(--muted);
-  font-size: 18px;
+  margin-bottom: 28px;
 }
 .facts {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 .fact {
-  padding: 18px 20px;
+  padding: 16px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -480,15 +494,11 @@ h3,
   gap: 6px;
 }
 .fact-figure {
-  font-size: 30px;
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.15;
   color: var(--accent);
 }
-.fact .eyebrow {
-  display: block;
-  margin: 0 0 2px;
-  font-size: 12px;
-}
-.fact-text {
+.fact .fact-text {
   margin: 0;
   color: var(--ink);
 }
@@ -502,19 +512,13 @@ h3,
   align-items: center;
   min-height: 44px;
 }
-.greener-phone {
-  flex: 0 1 300px;
-  min-width: 0;
-  margin: 0 auto;
-}
-.greener-phone .phone-frame {
-  height: auto;
-  max-width: 280px;
-  margin: 0 auto;
-  padding: 0;
-}
-.greener-phone .phone-frame img {
-  border-radius: 0;
+@media (max-width: 600px) {
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .facts > :last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Privacy */
@@ -532,24 +536,13 @@ h3,
   background-image: url('leaves/leaves-bottom-left.svg');
   background-repeat: no-repeat;
   background-position: bottom left;
-  background-size: 250px auto;
+  background-size: 320px 320px;
 }
 .pricing .wrap {
   max-width: 860px;
 }
-.pricing-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px 24px;
+.pricing h2 {
   margin-bottom: 20px;
-}
-.pricing-head h2 {
-  margin: 0;
-}
-.pricing-head img {
-  width: 130px;
 }
 .card--table {
   padding: 8px;
@@ -567,6 +560,16 @@ h3,
 }
 .plans thead td {
   border-top: 0;
+}
+/* The jar sits in the table's empty corner cell. */
+.plans .plans-jar {
+  padding: 8px 16px;
+  text-align: left;
+  vertical-align: bottom;
+}
+.plans-jar img {
+  display: block;
+  width: 96px;
 }
 .plans thead th {
   padding: 16px;
@@ -642,6 +645,11 @@ h3,
 }
 .faq details p {
   margin: 0 0 12px;
+}
+.faq details a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 /* Closing */
@@ -883,6 +891,9 @@ h3,
   :root {
     --gutter: 16px;
   }
+  .plans-jar img {
+    width: 64px;
+  }
   .section {
     padding-top: 56px;
     padding-bottom: 56px;
@@ -898,11 +909,11 @@ h3,
   }
   .hero {
     background-size:
-      120px auto,
+      200px 200px,
       auto;
   }
   .pricing {
-    background-size: 160px auto;
+    background-size: 200px 200px;
   }
   .plans {
     font-size: 15px;

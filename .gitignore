@@ -31,3 +31,24 @@ supabase/.temp
 
 # Original prototype: local porting reference only, never committed (may contain personal data)
 prototype/
+
+# Personal Claude Code files (the shared .claude/settings.json stays tracked)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Supabase local secrets and keys (config.toml says never commit signing keys)
+supabase/.env
+supabase/functions/.env
+supabase/signing_keys.json
+
+# Keys and certificates
+*.pem
+*.p8
+*.key
+
+# Tool caches and editor junk
+.eslintcache
+*.tsbuildinfo
+*.log
+.idea/
+Thumbs.db

@@ -1,6 +1,8 @@
 import type { Page, Route } from '@playwright/test'
 import {
   SIGNUP_FUNCTION_PATH,
+  SITE_ANALYTICS_ORIGIN,
+  SITE_ANALYTICS_SCRIPT,
   SITE_SIGNUP_ORIGIN,
   appHeaders,
   siteExtraOrigins,
@@ -15,10 +17,15 @@ test.use({ allowedOrigins: siteExtraOrigins })
 
 const SIGNUP_URL = `${SITE_SIGNUP_ORIGIN}${SIGNUP_FUNCTION_PATH}`
 
-// Tests never reach the real Supabase project: every request to it is answered here (a test's
-// own page.route wins) or aborted.
+// Tests never reach the real Supabase project or Umami: every request to them is answered here
+// (a test's own page.route wins) or aborted, so no test ever records a real sign-up or page view.
+// Umami's tracker URL gets an empty stand-in script by default.
 test.beforeEach(async ({ context }) => {
   await context.route(`${SITE_SIGNUP_ORIGIN}/**`, (route) => route.abort())
+  await context.route(`${SITE_ANALYTICS_ORIGIN}/**`, (route) => route.abort())
+  await context.route(`${SITE_ANALYTICS_SCRIPT}`, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/javascript', body: '' }),
+  )
 })
 
 test('the landing page loads at / under its own policy, with one h1', async ({ page }) => {
@@ -35,14 +42,62 @@ test('the landing page loads at / under its own policy, with one h1', async ({ p
   await expect(page.getByRole('main')).toHaveCount(1)
   await expect(page.getByRole('contentinfo')).toHaveCount(1)
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
-  // Two scripts, our own: the local price line and the sign-up forms.
-  await expect(page.locator('script')).toHaveCount(2)
+  // Three scripts: the local price line and the sign-up forms from our own origin, and Umami's
+  // tracker (answered by a stand-in here).
+  await expect(page.locator('script')).toHaveCount(3)
   expect(
     await page.locator('script').evaluateAll((els) => els.map((el) => el.getAttribute('src'))),
-  ).toEqual(['/site-assets/local-price.js', '/site-assets/signup.js'])
+  ).toEqual([
+    '/site-assets/local-price.js',
+    '/site-assets/signup.js',
+    'https://cloud.umami.is/script.js',
+  ])
   // Scroll through so lazy images load too; the guard then checks every request and CSP report.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
   await page.waitForLoadState('networkidle')
+})
+
+test('Umami records the page view, through the CSP, and nothing else', async ({ page }) => {
+  // Stand-ins for Umami's tracker and collector, so the real CSP is tested with no real page view:
+  // the script loads from Umami's URL and posts like the tracker does.
+  await page.route(`${SITE_ANALYTICS_SCRIPT}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/javascript',
+      body: `fetch('${SITE_ANALYTICS_ORIGIN}/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'event', payload: {
+          website: document.currentScript.getAttribute('data-website-id'),
+          url: location.href,
+        } }),
+      })`,
+    }),
+  )
+  const sent: { type: string; payload: Record<string, unknown> }[] = []
+  await page.route(`${SITE_ANALYTICS_ORIGIN}/api/send`, async (route) => {
+    const request = route.request()
+    const cors = {
+      'Access-Control-Allow-Origin': new URL(page.url()).origin,
+      'Access-Control-Allow-Headers': 'content-type',
+    }
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors })
+    sent.push(request.postDataJSON())
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: cors,
+      body: '{}',
+    })
+  })
+  await page.goto('/')
+  await expect.poll(() => sent.length).toBe(1)
+  expect(sent[0]?.type).toBe('event')
+  expect(sent[0]?.payload).toMatchObject({
+    website: '112f1ebe-71fb-4b2e-bcf1-c3d03b4afb72',
+    url: `${new URL(page.url()).origin}/`,
+  })
+  // The guard (CSP violations, unexpected origins) runs after the test as usual.
 })
 
 test('every image and both bundled fonts load', async ({ page }) => {
@@ -245,10 +300,14 @@ test.describe('sign-up with JavaScript', () => {
     await page.goto('/')
     for (const form of ['hero', 'end'] as const) {
       const { box, email } = signup(page, form)
-      await expect(email).toHaveAccessibleDescription(
-        "We'll only use your email to tell you when Shelfie launches, then delete it. Privacy",
+      const notice = box.locator('.signup-notice')
+      await expect(notice).toHaveText(
+        "We'll only use your email to tell you when Shelfie launches, then delete it.",
       )
-      await expect(box.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '#privacy')
+      await expect(notice.locator('a')).toHaveCount(0)
+      await expect(email).toHaveAccessibleDescription(
+        "We'll only use your email to tell you when Shelfie launches, then delete it.",
+      )
       await expect(box.locator('.signup-result')).toHaveCount(4)
       for (const result of await box.locator('.signup-result').all()) {
         await expect(result).toBeHidden()

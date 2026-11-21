@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { SITE_ANALYTICS_ORIGIN, SITE_ANALYTICS_SCRIPT } from '../security-headers'
 
 test('loads the shell and nothing leaves our origin', async ({ page, baseURL }) => {
   const origin = new URL(baseURL ?? 'http://localhost:4173').origin
@@ -48,8 +49,13 @@ test('is installable: manifest is linked and valid', async ({ page, request }) =
   }
 })
 
-test('the service worker only controls /app/', async ({ page, baseURL }) => {
+test('the service worker only controls /app/', async ({ page, context, baseURL }) => {
   const origin = new URL(baseURL ?? 'http://localhost:4173').origin
+  // The landing page sends a page view to Umami; tests never send a real one.
+  await context.route(`${SITE_ANALYTICS_ORIGIN}/**`, (route) => route.abort())
+  await context.route(`${SITE_ANALYTICS_SCRIPT}`, (route) =>
+    route.fulfill({ status: 200, contentType: 'text/javascript', body: '' }),
+  )
   await page.goto('/app/')
   const scope = await page.evaluate(async () => (await navigator.serviceWorker.ready).scope)
   expect(scope).toBe(`${origin}/app/`)

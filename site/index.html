@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="light" />
     <meta
       name="description"
-      content="Shelfie remembers what you have, what's running low and automates your shopping. No guesswork."
+      content="Shelfie remembers what you have, what's running low and manages your shopping for you."
     />
     <title>Shelfie: stop keeping the bathroom cabinet in your head</title>
     <link rel="icon" type="image/svg+xml" href="/site-assets/favicon.svg" />
@@ -27,6 +27,11 @@
     <link rel="stylesheet" href="/site-assets/site.css" />
     <script src="/site-assets/local-price.js" defer></script>
     <script src="/site-assets/signup.js" defer></script>
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="112f1ebe-71fb-4b2e-bcf1-c3d03b4afb72"
+    ></script>
   </head>
   <body>
     <header class="site-header">
@@ -52,45 +57,8 @@
           <div class="hero-copy">
             <h1 id="hero-h">Stop keeping the bathroom cabinet in your head.</h1>
             <p class="lead">
-              Shelfie remembers what you have, what's running low and automates your shopping. No
-              guesswork.
+              Shelfie remembers what you have, what's running low and manages your shopping for you.
             </p>
-            <ul class="pills" aria-label="Key values">
-              <li class="pill-now pill-now--green">
-                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-                  <path
-                    d="M3 13C3 7 6.5 3 13 3c0 6-3.5 10-9 10z M3 13l5-5"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-                Greener Swaps
-              </li>
-              <li class="pill-now pill-now--green">
-                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-                  <rect
-                    x="3"
-                    y="7"
-                    width="10"
-                    height="7"
-                    rx="1.5"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                  />
-                  <path
-                    d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                  />
-                </svg>
-                Privacy Focused
-              </li>
-            </ul>
             <div class="signup signup--hero" data-signup>
               <form
                 class="signup-form"
@@ -99,7 +67,7 @@
               >
                 <input type="hidden" name="form" value="hero" />
                 <div class="signup-field">
-                  <label for="email-hero">Register your interest</label>
+                  <label class="sr-only" for="email-hero">Register your interest</label>
                   <input
                     id="email-hero"
                     name="email"
@@ -125,7 +93,6 @@
               </form>
               <p class="signup-notice" id="signup-hero-notice">
                 We'll only use your email to tell you when Shelfie launches, then delete it.
-                <a href="#privacy">Privacy</a>
               </p>
               <p class="signup-status" id="signup-hero-status" role="status" data-signup-status></p>
               <p
@@ -162,8 +129,8 @@
               </p>
             </div>
             <ul class="pills" aria-label="Planned launch dates">
-              <li class="pill-now"><strong>Web app</strong>&nbsp;· 4 Jan 2027</li>
-              <li class="pill-now"><strong>iPhone and Android</strong>&nbsp;· 10 Jan 2027</li>
+              <li class="pill-now"><strong>Web</strong>&nbsp;· 4 Jan 2027</li>
+              <li class="pill-now"><strong>iPhone &amp; Android</strong>&nbsp;· 10 Jan 2027</li>
             </ul>
           </div>
           <div class="hero-art">
@@ -180,13 +147,62 @@
               </svg>
               Toothpaste: about 9 days left
             </span>
+            <ul class="pills pills--center" aria-label="Key values">
+              <li class="pill-now pill-now--green">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                  <path
+                    d="M8 2v7M5 6l3 3 3-3M3 10v2.5A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5V10"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Easy Imports
+              </li>
+              <li class="pill-now pill-now--green">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                  <path
+                    d="M3 13C3 7 6.5 3 13 3c0 6-3.5 10-9 10z M3 13l5-5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Greener Swaps
+              </li>
+              <li class="pill-now pill-now--green">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                  <rect
+                    x="3"
+                    y="7"
+                    width="10"
+                    height="7"
+                    rx="1.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                  />
+                  <path
+                    d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                  />
+                </svg>
+                Privacy First
+              </li>
+            </ul>
           </div>
         </div>
       </section>
 
       <section class="section" aria-labelledby="fam-h">
         <div class="wrap">
-          <p class="eyebrow">Sound familiar?</p>
+          <p class="eyebrow">Sounds familiar?</p>
           <h2 id="fam-h">Running a home means remembering a hundred small things.</h2>
           <div class="grid--280 grid">
             <div class="card card--moment">
@@ -240,8 +256,8 @@
                   height="49"
                 />
               </div>
-              <h3>You're the household's memory. Or nobody is.</h3>
-              <p>Both end with a trip to the shop and no list.</p>
+              <h3>Everyone forgot the coffee.</h3>
+              <p>Monday morning found out first.</p>
             </div>
           </div>
         </div>
@@ -250,7 +266,7 @@
       <section id="how" class="section section--white" aria-labelledby="how-h">
         <div class="wrap">
           <p class="eyebrow">How it works</p>
-          <h2 id="how-h">Paste your orders and your shelves fill themselves.</h2>
+          <h2 id="how-h">Add your orders. Shelfie does the rest.</h2>
           <ol class="grid--230 steps grid">
             <li class="card step">
               <span class="step-number disp" aria-hidden="true">1</span>
@@ -306,9 +322,7 @@
               <span class="step-number disp" aria-hidden="true">4</span>
               <h3>Restock on time</h3>
               <p>Reminders of what's low, before you run out.</p>
-              <p>
-                <span class="badge">Plus</span>An AI shopping assistant to automate your shopping.
-              </p>
+              <p><span class="badge">Paid</span>AI shopping assistant</p>
               <div class="phone">
                 <div class="phone-frame phone-frame--mist">
                   <img
@@ -328,32 +342,62 @@
       <section class="section" aria-labelledby="cup-h">
         <div class="wrap">
           <p class="eyebrow">Every cupboard</p>
-          <h2 id="cup-h">Not just the fridge.</h2>
-          <ul class="grid--220 plain-list grid">
+          <h2 id="cup-h">Not just the pantry.</h2>
+          <ul class="grid--190 plain-list grid">
             <li class="card card--shelf">
-              <img src="/site-assets/icons/category-bathroom.svg" alt="" width="36" height="36" />
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/cupboard-bathroom.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
               <h3>Bathroom</h3>
               <p>Skincare, hair, dental</p>
             </li>
             <li class="card card--shelf">
-              <img src="/site-assets/icons/category-cleaning.svg" alt="" width="36" height="36" />
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/cupboard-cleaning.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
               <h3>Cleaning</h3>
               <p>Tablets, sprays, sponges</p>
             </li>
             <li class="card card--shelf">
               <img
-                src="/site-assets/icons/category-baby-and-kids.svg"
+                class="shelf-icon"
+                src="/site-assets/icons/cupboard-baby-and-kids.svg"
                 alt=""
-                width="36"
-                height="36"
+                width="44"
+                height="53"
               />
               <h3>Baby and kids</h3>
               <p>Nappies, wipes, cream</p>
             </li>
             <li class="card card--shelf">
-              <img src="/site-assets/icons/category-medicine.svg" alt="" width="36" height="36" />
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/cupboard-medicine.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
               <h3>Medicine cabinet</h3>
               <p>With use-by dates</p>
+            </li>
+            <li class="card card--shelf">
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/cupboard-pantry.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
+              <h3>Pantry</h3>
+              <p>Coffee, tins, dried goods</p>
             </li>
           </ul>
         </div>
@@ -361,61 +405,48 @@
 
       <section class="section section--mint greener" aria-labelledby="waste-h">
         <div class="wrap">
-          <div class="greener-copy">
-            <p class="eyebrow">Greener home</p>
-            <h2 id="waste-h">Waste less, swap greener.</h2>
-            <p>
-              Use things before they expire, stop buying what you already have, and find greener
-              versions of what you use.
-            </p>
-            <div class="facts">
-              <div class="card fact">
-                <span class="fact-figure disp">£1,000 a year</span>
-                <div>
-                  <span class="eyebrow">Kitchen</span>
-                  <p class="fact-text">
-                    UK households throw away 6.4 million tonnes of food and drink a year, about
-                    £1,000 for a family of four.
-                  </p>
-                  <p class="source">
-                    Source:
-                    <a
-                      href="https://wrap.ngo/resources/report/Household%20Food%20and%20Drink%20Waste%20in%20the%20United%20Kingdom%202021/22"
-                      rel="noreferrer"
-                      >WRAP, Household Food and Drink Waste in the UK 2021/22</a
-                    >
-                  </p>
-                </div>
-              </div>
-              <div class="card fact">
-                <span class="fact-figure disp">44% binned</span>
-                <div>
-                  <span class="eyebrow">Bathroom and household</span>
-                  <p class="fact-text">
-                    The average UK household uses 480 plastic bottles a year but recycles only 270
-                    of them.
-                  </p>
-                  <p class="source">
-                    Source:
-                    <a
-                      href="https://acrplus.org/en/news/news-from-our-members/843-wrap-britain-fails-to-recycle-16-million-plastic-bottles-every-day"
-                      rel="noreferrer"
-                      >Recycle Now (WRAP)</a
-                    >
-                  </p>
-                </div>
-              </div>
+          <p class="eyebrow">Greener home</p>
+          <h2 id="waste-h">Waste less, swap greener.</h2>
+          <div class="facts">
+            <div class="card fact">
+              <span class="fact-figure disp">75% less plastic</span>
+              <p class="fact-text">
+                One 10x concentrated cleaning refill used 75% less plastic, and cost 25% less per
+                ml.
+              </p>
+              <p class="source">
+                <a
+                  href="https://www.which.co.uk/news/article/refillable-plastic-bottles-how-eco-friendly-are-they-akH2C1R2JMkg"
+                  rel="noreferrer"
+                  >Which?, Refillable plastic bottles</a
+                >
+              </p>
             </div>
-          </div>
-          <div class="greener-phone">
-            <div class="phone-frame">
-              <img
-                src="/site-assets/screens/shop-now.png"
-                alt="Shelfie app screen: Shop Now, 8 items with 7 greener suggestions, and a Greener Product box for cotton pads with Open the guide, Swap product and Keep this one"
-                width="716"
-                height="1042"
-                loading="lazy"
-              />
+            <div class="card fact">
+              <span class="fact-figure disp">44% binned</span>
+              <p class="fact-text">
+                The average UK household uses 480 plastic bottles a year but recycles only 270.
+              </p>
+              <p class="source">
+                <a
+                  href="https://acrplus.org/en/news/news-from-our-members/843-wrap-britain-fails-to-recycle-16-million-plastic-bottles-every-day"
+                  rel="noreferrer"
+                  >Recycle Now (WRAP)</a
+                >
+              </p>
+            </div>
+            <div class="card fact">
+              <span class="fact-figure disp">£1 billion of skincare</span>
+              <p class="fact-text">
+                UK skincare users have about two unused products each, worth around £35.
+              </p>
+              <p class="source">
+                <a
+                  href="https://professionalbeauty.co.uk/site/newsdetails/more-than-1-billion-in-skincare-products-wasted-uk"
+                  rel="noreferrer"
+                  >The Body Shop (2025), via Professional Beauty</a
+                >
+              </p>
             </div>
           </div>
         </div>
@@ -425,44 +456,64 @@
         <div class="wrap">
           <p class="eyebrow">Privacy</p>
           <h2 id="priv-h">Your cupboard stays yours.</h2>
-          <ul class="plain-list grid">
+          <ul class="grid--200 plain-list grid">
             <li class="card card--privacy">
-              <img src="/site-assets/icons/privacy-keeps.svg" alt="" width="32" height="32" />
-              <h3>What Shelfie keeps</h3>
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/privacy-keeps.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
+              <h3>Yours alone</h3>
+              <p>Items live on your device. Syncs are encrypted, then stored in the EU.</p>
+            </li>
+            <li class="card card--privacy">
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/privacy-never.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
+              <h3>Never sold</h3>
+              <p>No shop passwords, no ads on what you buy, no data sales, no cookies.</p>
+            </li>
+            <li class="card card--privacy">
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/privacy-count.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
+              <h3>Choose what we count</h3>
+              <p>Off any time: Anonymous counts, never your items.</p>
+            </li>
+            <li class="card card--privacy">
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/privacy-ai.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
+              <h3>AI on request</h3>
               <p>
-                Your items live on your device. If you sync, they're encrypted first, so our server
-                can't read them.
+                AI import and the assistant <span class="badge badge--inline">Plus</span> only run
+                when you ask.
               </p>
             </li>
             <li class="card card--privacy">
-              <img src="/site-assets/icons/privacy-never.svg" alt="" width="32" height="32" />
-              <h3>What it never does</h3>
-              <p>No shop passwords. No selling your data. No ads based on what you buy.</p>
-            </li>
-            <li class="card card--privacy">
-              <img src="/site-assets/icons/privacy-leave.svg" alt="" width="32" height="32" />
+              <img
+                class="shelf-icon"
+                src="/site-assets/icons/privacy-leave.svg"
+                alt=""
+                width="44"
+                height="53"
+              />
               <h3>Leave any time</h3>
-              <p>Export everything, or delete everything.</p>
-            </li>
-            <li class="card card--privacy">
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 32 32"
-                fill="none"
-                stroke="#0e6f6b"
-                stroke-width="2"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M16 4l2.6 7.4L26 14l-7.4 2.6L16 24l-2.6-7.4L6 14l7.4-2.6z" />
-                <path d="M25 22l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" />
-              </svg>
-              <h3>When AI helps</h3>
-              <p>
-                AI import and the shopping assistant only run when you ask. They send only what's
-                needed, and nothing is ever used for ads.
-              </p>
+              <p>Export or delete everything, in one tap, whenever you like.</p>
             </li>
           </ul>
         </div>
@@ -471,20 +522,19 @@
       <section id="pricing" class="section pricing" aria-labelledby="price-h">
         <div class="wrap">
           <p class="eyebrow">Pricing</p>
-          <div class="pricing-head">
-            <h2 id="price-h">Free to start. Plus when you want more.</h2>
-            <img
-              src="/site-assets/mascot/jar-happy-on-ledge.svg"
-              alt="Shelfie's jar on its shelf, happy and well stocked"
-              width="130"
-              height="143"
-            />
-          </div>
+          <h2 id="price-h">Free to start. Plus when you want more.</h2>
           <div class="card card--table">
             <table class="plans">
               <thead>
                 <tr>
-                  <td></td>
+                  <td class="plans-jar">
+                    <img
+                      src="/site-assets/mascot/jar-happy-on-ledge.svg"
+                      alt="Shelfie's jar on its shelf, happy and well stocked"
+                      width="96"
+                      height="106"
+                    />
+                  </td>
                   <th scope="col">Free<span class="price">£0</span></th>
                   <th scope="col" class="plus">
                     Plus<span class="price">£2.99 a month</span
@@ -530,6 +580,13 @@
           <h2 id="faq-h">Questions</h2>
           <div class="faq-list">
             <details class="card">
+              <summary>What happens to my order history?</summary>
+              <p>
+                Shelfie keeps the items, not the order. Once your shelves are filled, the imported
+                text is gone, and your items stay on your device.
+              </p>
+            </details>
+            <details class="card">
               <summary>How accurate are the stock estimates?</summary>
               <p>
                 Shelfie works from when you bought each item and how long it usually lasts. You can
@@ -539,6 +596,13 @@
             <details class="card">
               <summary>Is there an app for iPhone and Android?</summary>
               <p>Yes. The iPhone and Android apps are due on 10 January 2027.</p>
+            </details>
+            <details class="card">
+              <summary>Something else on your mind?</summary>
+              <p>
+                Write to <a href="mailto:hello@homeshelfie.com">hello@homeshelfie.com</a>.
+                Questions, feedback and removal requests all welcome.
+              </p>
             </details>
           </div>
         </div>
@@ -566,7 +630,7 @@
             >
               <input type="hidden" name="form" value="end" />
               <div class="signup-field">
-                <label for="email-end">Register your interest</label>
+                <label class="sr-only" for="email-end">Register your interest</label>
                 <input
                   id="email-end"
                   name="email"
@@ -592,7 +656,6 @@
             </form>
             <p class="signup-notice" id="signup-end-notice">
               We'll only use your email to tell you when Shelfie launches, then delete it.
-              <a href="#privacy">Privacy</a>
             </p>
             <p class="signup-status" id="signup-end-status" role="status" data-signup-status></p>
             <p
@@ -646,6 +709,12 @@
                 <li><a href="#how">How it works</a></li>
                 <li><a href="#pricing">Pricing</a></li>
                 <li><a href="#faq">FAQ</a></li>
+              </ul>
+            </nav>
+            <nav class="footer-nav" aria-labelledby="foot-company">
+              <h2 id="foot-company">Company</h2>
+              <ul>
+                <li><a href="mailto:hello@homeshelfie.com">hello@homeshelfie.com</a></li>
               </ul>
             </nav>
             <nav class="footer-nav" aria-labelledby="foot-legal">

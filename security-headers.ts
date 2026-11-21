@@ -47,19 +47,27 @@ export const appHeaders: Record<string, string> = {
  * The landing page's two outside services, each one exact https origin or null while the owner
  * has not chosen it. When one changes, the pinned lists in src/security-headers.test.ts change
  * with it. Never guess one.
- *  - Analytics: not chosen yet.
+ *  - Analytics: Umami Cloud (owner, 20 Nov 2026). For now the landing page loads Umami's tracker
+ *    straight from SITE_ANALYTICS_SCRIPT (the one exception to privacy rule 2; self-hosting it
+ *    comes later), allowed in script-src by its exact URL, not the whole host. The tracker posts
+ *    page views to SITE_ANALYTICS_ORIGIN (`/api/send`), allowed in connect-src.
  *  - Sign-up: the Supabase project that runs the `signup` edge function (owner, 16 Nov 2026).
  *    The landing page's forms post to `${SITE_SIGNUP_ORIGIN}${SIGNUP_FUNCTION_PATH}`, without
  *    JavaScript (form-action) or from site/site-assets/signup.js (connect-src).
  */
-export const SITE_ANALYTICS_ORIGIN: string | null = null
+export const SITE_ANALYTICS_ORIGIN: string | null = 'https://gateway.umami.is'
+export const SITE_ANALYTICS_SCRIPT: string | null = 'https://cloud.umami.is/script.js'
 export const SITE_SIGNUP_ORIGIN: string | null = 'https://ogyuvrcixtwbtjbuhljz.supabase.co'
 
 /** Where the sign-up edge function lives on SITE_SIGNUP_ORIGIN. */
 export const SIGNUP_FUNCTION_PATH = '/functions/v1/signup'
 
 /** The outside origins the landing page may contact: only the ones that are set. */
-const siteServices: (string | null)[] = [SITE_ANALYTICS_ORIGIN, SITE_SIGNUP_ORIGIN]
+const siteServices: (string | null)[] = [
+  SITE_ANALYTICS_SCRIPT === null ? null : new URL(SITE_ANALYTICS_SCRIPT).origin,
+  SITE_ANALYTICS_ORIGIN,
+  SITE_SIGNUP_ORIGIN,
+]
 export const siteExtraOrigins: string[] = siteServices.filter(
   (origin): origin is string => origin !== null,
 )
@@ -75,7 +83,7 @@ function sources(base: string, ...extra: (string | null)[]): string {
 export const siteHeaders: Record<string, string> = {
   'Content-Security-Policy': [
     "default-src 'none'",
-    "script-src 'self'",
+    `script-src ${sources("'self'", SITE_ANALYTICS_SCRIPT)}`,
     "style-src 'self'",
     "img-src 'self'",
     "font-src 'self'",

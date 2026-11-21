@@ -15,5 +15,13 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "vite.config.ts", "security-headers.ts", "playwright.config.ts", "e2e"]
+  "include": [
+    "src",
+    "vite.config.ts",
+    "security-headers.ts",
+    "playwright.config.ts",
+    "e2e",
+    "supabase/functions"
+  ],
+  "exclude": ["supabase/functions/**/index.ts"]
 }
