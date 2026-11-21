@@ -132,7 +132,7 @@ describe('landing page sign-up forms', () => {
 })
 
 describe('Umami on the landing page', () => {
-  it('loads Umami Cloud deferred, with the website id and no extra reporting', () => {
+  it('loads Umami Cloud deferred, with the website id, Do Not Track and no extra reporting', () => {
     const page = readFileSync(new URL('index.html', siteRoot), 'utf8')
     const tags = [...page.matchAll(/<script\b[^>]*umami[^>]*>/gi)].map(([tag]) => tag)
     expect(tags).toHaveLength(1)
@@ -141,5 +141,7 @@ describe('Umami on the landing page', () => {
     expect(tag).toContain(`src="${SITE_ANALYTICS_SCRIPT}"`)
     expect(tag).toContain('data-website-id="112f1ebe-71fb-4b2e-bcf1-c3d03b4afb72"')
     expect(tag).not.toMatch(/data-(host-url|errors|performance)=/)
+    // Visitors with Do Not Track get no page views and no events.
+    expect(tag).toContain('data-do-not-track="true"')
   })
 })

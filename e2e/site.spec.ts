@@ -42,15 +42,16 @@ test('the landing page loads at / under its own policy, with one h1', async ({ p
   await expect(page.getByRole('main')).toHaveCount(1)
   await expect(page.getByRole('contentinfo')).toHaveCount(1)
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible()
-  // Three scripts: the local price line and the sign-up forms from our own origin, and Umami's
-  // tracker (answered by a stand-in here).
-  await expect(page.locator('script')).toHaveCount(3)
+  // Four scripts: the local price line and the sign-up forms from our own origin, Umami's tracker
+  // (answered by a stand-in here), and the section views, which need Umami loaded first.
+  await expect(page.locator('script')).toHaveCount(4)
   expect(
     await page.locator('script').evaluateAll((els) => els.map((el) => el.getAttribute('src'))),
   ).toEqual([
     '/site-assets/local-price.js',
     '/site-assets/signup.js',
     'https://cloud.umami.is/script.js',
+    '/site-assets/section-views.js',
   ])
   // Scroll through so lazy images load too; the guard then checks every request and CSP report.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
@@ -313,6 +314,246 @@ test.describe('sign-up with JavaScript', () => {
         await expect(result).toBeHidden()
       }
     }
+  })
+})
+
+// A stand-in for Umami's tracker: window.umami.track posts each event to the collector the way
+// the real script does, so the tests see exactly what would leave the browser.
+async function stubUmami(page: Page): Promise<string[]> {
+  const bodies: string[] = []
+  await page.route(`${SITE_ANALYTICS_SCRIPT}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/javascript',
+      body: `(() => {
+        const website = document.currentScript.getAttribute('data-website-id')
+        window.umami = {
+          track: (name, data) =>
+            fetch('${SITE_ANALYTICS_ORIGIN}/api/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type: 'event', payload: { website, url: location.href, name, data } }),
+            }),
+        }
+      })()`,
+    }),
+  )
+  await page.route(`${SITE_ANALYTICS_ORIGIN}/api/send`, async (route) => {
+    const request = route.request()
+    const cors = {
+      'Access-Control-Allow-Origin': new URL(page.url()).origin,
+      'Access-Control-Allow-Headers': 'content-type',
+    }
+    if (request.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors })
+    bodies.push(request.postData() ?? '')
+    return route.fulfill({
+      status: 200,
+      headers: cors,
+      contentType: 'application/json',
+      body: '{}',
+    })
+  })
+  return bodies
+}
+
+/** The events sent so far, as `name` plus their data. */
+function events(bodies: string[]) {
+  return bodies.map((body) => {
+    const { payload } = JSON.parse(body) as { payload: { name: string; data: unknown } }
+    return { name: payload.name, data: payload.data }
+  })
+}
+
+test.describe('Umami sign-up events', () => {
+  // Only the sign-up events; section views are tested on their own below.
+  const notify = (bodies: string[]) => events(bodies).filter((e) => e.name.startsWith('notify-'))
+
+  async function signUp(page: Page, form: 'hero' | 'end', address = 'ana@example.com') {
+    const box = signup(page, form)
+    await box.email.fill(address)
+    await box.button.click()
+    await expect(box.status).not.toBeEmpty()
+  }
+
+  test('a sign-up sends notify-open, then notify-signup after the server says ok, and no address', async ({
+    page,
+  }) => {
+    const bodies = await stubUmami(page)
+    await answerJson(page, 'ok')
+    await page.goto('/')
+    await signUp(page, 'hero')
+    await expect.poll(() => notify(bodies).length).toBe(2)
+    expect(notify(bodies)).toEqual([
+      { name: 'notify-open', data: { section: 'hero' } },
+      { name: 'notify-signup', data: { section: 'hero' } },
+    ])
+    for (const body of bodies) expect(body).not.toContain('@')
+  })
+
+  test('the closing form reports section end', async ({ page }) => {
+    const bodies = await stubUmami(page)
+    await answerJson(page, 'ok')
+    await page.goto('/')
+    await signUp(page, 'end', 'bo@example.org')
+    await expect.poll(() => notify(bodies).length).toBe(2)
+    expect(notify(bodies).map((e) => e.data)).toEqual([{ section: 'end' }, { section: 'end' }])
+  })
+
+  for (const [result, reason] of [
+    ['invalid', 'invalid'],
+    ['rate_limited', 'rate_limited'],
+    ['error', 'error'],
+  ] as const) {
+    test(`a ${result} answer sends notify-error with reason ${reason}`, async ({ page }) => {
+      const bodies = await stubUmami(page)
+      await answerJson(page, result)
+      await page.goto('/')
+      await signUp(page, 'hero')
+      await expect.poll(() => notify(bodies).length).toBe(2)
+      expect(notify(bodies)[1]).toEqual({
+        name: 'notify-error',
+        data: { section: 'hero', reason },
+      })
+      for (const body of bodies) expect(body).not.toContain('@')
+    })
+  }
+
+  test('a network failure sends notify-error with reason network', async ({ page }) => {
+    const bodies = await stubUmami(page)
+    await page.route(SIGNUP_URL, (route) => route.abort('failed'))
+    await page.goto('/')
+    await signUp(page, 'hero')
+    await expect.poll(() => notify(bodies).length).toBe(2)
+    expect(notify(bodies)[1]).toEqual({
+      name: 'notify-error',
+      data: { section: 'hero', reason: 'network' },
+    })
+  })
+
+  test('the same address twice counts as two sign-ups, like a new one', async ({ page }) => {
+    const bodies = await stubUmami(page)
+    await answerJson(page, 'ok')
+    await page.goto('/')
+    await signUp(page, 'hero')
+    await signUp(page, 'hero')
+    await expect.poll(() => notify(bodies).length).toBe(3)
+    expect(notify(bodies).map((e) => e.name)).toEqual([
+      'notify-open',
+      'notify-signup',
+      'notify-signup',
+    ])
+  })
+
+  test('a filled-in honeypot sends no event at all', async ({ page }) => {
+    const bodies = await stubUmami(page)
+    const seen: string[] = []
+    await answerJson(page, 'ok', seen)
+    await page.goto('/')
+    await page.locator('#website-hero').evaluate((input: HTMLInputElement) => {
+      input.value = 'https://spam.example'
+    })
+    await signUp(page, 'hero', 'bot@example.com')
+    expect(seen).toHaveLength(1)
+    await page.waitForTimeout(500)
+    expect(notify(bodies)).toEqual([])
+  })
+
+  test('the form still works when Umami is blocked', async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(String(error)))
+    await page.route(`${SITE_ANALYTICS_SCRIPT}`, (route) => route.abort('blockedbyclient'))
+    await answerJson(page, 'ok')
+    await page.goto('/')
+    await signUp(page, 'hero')
+    await expect(signup(page, 'hero').status).toHaveText(MESSAGES.ok)
+    expect(errors).toEqual([])
+  })
+})
+
+test.describe('Umami section views', () => {
+  const VISIBLE = [
+    'hero',
+    'sound-familiar',
+    'how-it-works',
+    'every-cupboard',
+    'greener-home',
+    'privacy',
+    'pricing',
+    'faq',
+    'closing',
+  ]
+
+  const sectionViews = (bodies: string[]) =>
+    events(bodies)
+      .filter((e) => e.name === 'section-view')
+      .map((e) => e.data as Record<string, unknown>)
+
+  for (const width of [390, 1440]) {
+    test(`scrolling slowly at ${width}px counts each visible section once, in order`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 })
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      const bodies = await stubUmami(page)
+      await page.goto('/')
+      await page.waitForTimeout(900)
+      for (const name of VISIBLE.slice(1)) {
+        await page
+          .locator(`[data-section="${name}"]`)
+          .evaluate((el) => el.scrollIntoView({ block: 'center' }))
+        await page.waitForTimeout(900)
+      }
+      expect(sectionViews(bodies).map((data) => data.section)).toEqual(VISIBLE)
+      // Only the section's name, nothing about the visitor or their scrolling.
+      for (const data of sectionViews(bodies)) expect(Object.keys(data)).toEqual(['section'])
+      for (const body of bodies) expect(body).not.toContain('@')
+    })
+  }
+
+  for (const [link, target] of [
+    ['How it works', 'how-it-works'],
+    ['Privacy', 'privacy'],
+    ['Pricing', 'pricing'],
+    ['FAQ', 'faq'],
+  ] as const) {
+    test(`the ${link} link counts where it lands, not the sections it scrolls past`, async ({
+      page,
+    }) => {
+      const bodies = await stubUmami(page)
+      await page.goto('/')
+      await page.waitForTimeout(900)
+      await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: link }).click()
+      // Long enough for the smooth scroll to land (slower on phones) and the 600 ms to pass.
+      await page.waitForTimeout(3000)
+      expect(sectionViews(bodies).map((data) => data.section)).toEqual(['hero', target])
+    })
+  }
+
+  test('the hidden reviews placeholder never counts', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    const bodies = await stubUmami(page)
+    await page.goto('/')
+    const reviews = page.locator('[data-section="reviews"]')
+    await expect(reviews).toBeHidden()
+    for (const name of ['privacy', 'pricing']) {
+      await page
+        .locator(`[data-section="${name}"]`)
+        .evaluate((el) => el.scrollIntoView({ block: 'center' }))
+      await page.waitForTimeout(900)
+    }
+    expect(sectionViews(bodies).map((data) => data.section)).not.toContain('reviews')
+  })
+
+  test('the page works the same when Umami is blocked', async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(String(error)))
+    await page.route(`${SITE_ANALYTICS_SCRIPT}`, (route) => route.abort('blockedbyclient'))
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/')
+    await page.waitForTimeout(900)
+    await page.locator('[data-section="closing"]').scrollIntoViewIfNeeded()
+    await page.waitForTimeout(900)
+    expect(errors).toEqual([])
   })
 })
 

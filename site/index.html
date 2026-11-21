@@ -31,7 +31,9 @@
       defer
       src="https://cloud.umami.is/script.js"
       data-website-id="112f1ebe-71fb-4b2e-bcf1-c3d03b4afb72"
+      data-do-not-track="true"
     ></script>
+    <script src="/site-assets/section-views.js" defer></script>
   </head>
   <body>
     <header class="site-header">
@@ -52,7 +54,7 @@
     </header>
 
     <main>
-      <section id="top" class="hero" aria-labelledby="hero-h">
+      <section id="top" class="hero" aria-labelledby="hero-h" data-section="hero">
         <div class="wrap">
           <div class="hero-copy">
             <h1 id="hero-h">Stop keeping the bathroom cabinet in your head.</h1>
@@ -200,7 +202,7 @@
         </div>
       </section>
 
-      <section class="section" aria-labelledby="fam-h">
+      <section class="section" aria-labelledby="fam-h" data-section="sound-familiar">
         <div class="wrap">
           <p class="eyebrow">Sounds familiar?</p>
           <h2 id="fam-h">Running a home means remembering a hundred small things.</h2>
@@ -263,7 +265,12 @@
         </div>
       </section>
 
-      <section id="how" class="section section--white" aria-labelledby="how-h">
+      <section
+        id="how"
+        class="section section--white"
+        aria-labelledby="how-h"
+        data-section="how-it-works"
+      >
         <div class="wrap">
           <p class="eyebrow">How it works</p>
           <h2 id="how-h">Add your orders. Shelfie does the rest.</h2>
@@ -339,7 +346,7 @@
         </div>
       </section>
 
-      <section class="section" aria-labelledby="cup-h">
+      <section class="section" aria-labelledby="cup-h" data-section="every-cupboard">
         <div class="wrap">
           <p class="eyebrow">Every cupboard</p>
           <h2 id="cup-h">Not just the pantry.</h2>
@@ -403,7 +410,11 @@
         </div>
       </section>
 
-      <section class="section section--mint greener" aria-labelledby="waste-h">
+      <section
+        class="section section--mint greener"
+        aria-labelledby="waste-h"
+        data-section="greener-home"
+      >
         <div class="wrap">
           <p class="eyebrow">Greener home</p>
           <h2 id="waste-h">Waste less, swap greener.</h2>
@@ -452,7 +463,12 @@
         </div>
       </section>
 
-      <section id="privacy" class="section section--white privacy" aria-labelledby="priv-h">
+      <section
+        id="privacy"
+        class="section section--white privacy"
+        aria-labelledby="priv-h"
+        data-section="privacy"
+      >
         <div class="wrap">
           <p class="eyebrow">Privacy</p>
           <h2 id="priv-h">Your cupboard stays yours.</h2>
@@ -519,7 +535,16 @@
         </div>
       </section>
 
-      <section id="pricing" class="section pricing" aria-labelledby="price-h">
+      <!-- Reviews: a placeholder until there are real ratings and reviews. It stays hidden (shows
+           nothing and sends no section-view) until then; remove `hidden` when it gets content. -->
+      <section class="section reviews" data-section="reviews" hidden></section>
+
+      <section
+        id="pricing"
+        class="section pricing"
+        aria-labelledby="price-h"
+        data-section="pricing"
+      >
         <div class="wrap">
           <p class="eyebrow">Pricing</p>
           <h2 id="price-h">Free to start. Plus when you want more.</h2>
@@ -574,7 +599,12 @@
         </div>
       </section>
 
-      <section id="faq" class="section section--white faq" aria-labelledby="faq-h">
+      <section
+        id="faq"
+        class="section section--white faq"
+        aria-labelledby="faq-h"
+        data-section="faq"
+      >
         <div class="wrap">
           <p class="eyebrow">FAQ</p>
           <h2 id="faq-h">Questions</h2>
@@ -608,7 +638,7 @@
         </div>
       </section>
 
-      <section class="closing" aria-labelledby="end-h">
+      <section class="closing" aria-labelledby="end-h" data-section="closing">
         <svg class="closing-leaves" viewBox="0 0 220 220" aria-hidden="true">
           <g fill="#82b5a3" opacity=".25">
             <path d="M20 30 C 70 10, 120 40, 140 100 C 90 110, 40 80, 20 30Z" />
