@@ -13,7 +13,7 @@ Shelfie is a private, local-first home inventory app (household and personal-car
 - Mobile: Capacitor 8 wrapper, native barcode scanning, local notifications scheduled on the device. iOS must use CocoaPods (not Swift Package Manager), because `@capacitor-mlkit/barcode-scanning` 8.x supports only CocoaPods on iOS: add the platform with `npx cap add ios --packagemanager CocoaPods`.
 - Hosting: statichost.eu (Sweden), chosen 14 Nov 2026. It applies `dist/_headers` (see `security-headers.ts`) and builds from `statichost.yml`. For now (15 Nov 2026) one site serves both the landing page at `/` and the app at `/app/`, because the free plan allows one site; revisit when a second site is available. IndexedDB belongs to the origin, not the path, so the move to `/app/` keeps existing data.
 - Supabase stays the backend. Supabase is for encrypted records only, with one exception: the landing page waitlist table marketing.signup_emails, written only through public.signup_add by the signup edge function, readable by nobody else, deleted after the launch email. **Supabase project region: `eu-west-1` (Ireland), chosen by the owner on 21 Nov 2026.**
-- Roadmap is 17 steps (see `README.md`): 1-9 web app, 10 web barcode scanning, 11-17 iOS and Android.
+- Roadmap is 17 steps (see `docs/roadmap.md`): 1-9 web app, 10 web barcode scanning, 11-17 iOS and Android.
 - Greener swaps ("Shop now" suggests eco-friendly alternatives) come from a catalogue so Claude is called rarely:
   - A bundled static catalogue keyed by product type (the item's normalised "Shelf › Subcategory"). Each entry: `key`, `label`, `tags` (e.g. refillable, plastic-free, certified), `why`, shop search-URL templates, `source`, `reviewedAt`. It contains nothing about any user.
   - The user's choice is an optional `swap` field on the item (status `accepted` | `declined` | `snoozed`, swap key, decided date, optional snooze date). It is simply part of the item, so it is encrypted and synced with it.
@@ -76,7 +76,7 @@ Versions are now resolved in `package.json` and `package-lock.json`. Use `npm ci
 
 ## Layout
 
-Roadmap steps are in `README.md`. Folders marked (planned) do not exist yet; create them in the step shown.
+Roadmap steps are in `docs/roadmap.md`; setup and the folder overview are in `docs/development.md`. Folders marked (planned) do not exist yet; create them in the step shown.
 
 - `src/domain/` (step 2) pure TypeScript: item model, stock estimation, shelves, routine, import classification. No React, no storage, no network. Fully unit tested: each `x.ts` has its tests in `src/domain/testing/x.test.ts`; cross-module checks (including that domain tests run without browser globals) are in `testing/invariants.test.ts`, and shared test data in `testing/helpers/fixtures.ts` (test files only). Rules are in `src/domain/README.md`.
 - `src/domain/swaps/` (planned) greener-swap catalogue, lookup and reply validation. Pure TypeScript like the rest of `src/domain/`.

@@ -1,6 +1,8 @@
 # Docs
 
 - `decisions.md` - dated decision log, one line per decision with the reason
+- `development.md` - developer notes: getting started, getting the prototype, folder layout (moved from the root README)
+- `roadmap.md` - the 17 roadmap steps (moved from the root README)
 
 Planned documents, added as each step lands:
 

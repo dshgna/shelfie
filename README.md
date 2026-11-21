@@ -1,95 +1,39 @@
 # Shelfie
 
-A private home inventory. Local-first: your shelves live on your device, with optional end-to-end encrypted sync.
+A private home inventory. It remembers what's on your shelves, tells you what's running low, and helps you restock without the guesswork.
 
-## Decisions
+**Status:** pre-launch. Web app planned for 4 January 2027, iPhone and Android for 10 January 2027. Join the waitlist at [homeshelfie.com](https://homeshelfie.com).
 
-| Area            | Choice                                            | Why                                                      |
-| --------------- | ------------------------------------------------- | -------------------------------------------------------- |
-| UI              | React + TypeScript                                | Matches React Aria Components; widest Capacitor support  |
-| Styling         | Tailwind CSS v4, tokens ported from the prototype | One design system for web, iOS and Android               |
-| Components      | React Aria Components (no Ionic)                  | Accessible primitives, our own look                      |
-| Build           | Vite                                              | Fast, simple, first-class PWA plugin                     |
-| Backend         | Supabase (auth, Postgres, edge functions)         | Used as a store for **encrypted records only**           |
-| Encryption key  | Passphrase-derived, on the device (Web Crypto)    | Works in every browser; passkey option can come later    |
-| Sync            | In version 1                                      | Decided 13 Nov 2026                                      |
-| Mobile          | Capacitor wrapper around this same code           | Step after the web app                                   |
-| Hosting         | statichost.eu (Sweden)                            | Decided 14 Nov 2026                                      |
-| Supabase region | To be chosen (Canada Central or an EU region)     | Open decision                                            |
-| Mobile notes    | Capacitor 8, iOS via CocoaPods                    | ML Kit barcode plugin 8.x supports only CocoaPods on iOS |
+## What it does
 
-## Privacy rules the code must keep
+Working in the web app today: shelves and item rows, an item editor, a shopping list, a skincare routine view, and the Fill my shelves screens (with a mock AI result until the AI import is built).
 
-1. The app talks only to its own origin and Supabase (`security-headers.ts`, enforced by a unit test and an end-to-end test that fails on any other origin).
-2. No third-party fonts, scripts, analytics or images. Fonts are bundled from npm.
-3. Item data is encrypted on the device before upload. The server never receives the passphrase or key.
-4. Only `VITE_SUPABASE_URL` and the anon key may be in the browser bundle. No service-role or AI provider key, ever.
+Planned: end-to-end encrypted sync, AI import from pasted orders and screenshots, a greener swaps catalogue, barcode scanning, and iOS and Android apps.
 
-## Getting started
+## Privacy
 
-Needs Node 22 or newer (`.nvmrc`).
+- Your items live on your device first. Sync is optional and encrypted on the device, so the server never sees your passphrase, your key or your items.
+- AI import is the one place plaintext leaves the device. It only runs when you ask, sends only the item lines, and keeps no logs.
+- The app talks only to its own site and Supabase. No third-party scripts, fonts or analytics.
+
+## Self-hosting
+
+Deferred until after launch. The code is AGPL-3.0, so you may run your own copy, but there is no guide or support yet.
+
+## Develop
+
+Needs Node 22 or newer.
 
 ```sh
-npm ci                            # installs the versions pinned in package-lock.json
-npx playwright install chromium   # browser for the end-to-end tests
+npm ci
+npx playwright install chromium
+npm run dev            # http://localhost:5173
 npm run lint && npm run typecheck && npm test
-npm run dev                       # http://localhost:5173
-npm run test:e2e                  # builds, serves with production headers, runs Playwright
+npm run test:e2e
 ```
 
-Versions are pinned in `package.json` and `package-lock.json`. Do not re-run `npm run setup`: it was for the first install only and reinstalls every package at `latest`.
+More in [CLAUDE.md](CLAUDE.md), [docs/development.md](docs/development.md) and [docs/roadmap.md](docs/roadmap.md).
 
-### Getting the prototype
+## Licence
 
-The original prototype is not in the repo. Download the latest prototype HTML from the project owner and save it as `design/prototype/prototype-live-YYYY-MM-DD.html`, using the download date (for example `design/prototype/prototype-live-2026-11-15.html`). The folder is gitignored: do not add the file to git.
-
-## Layout
-
-```
-CLAUDE.md             project memory for Claude Code: decisions, privacy rules, conventions
-.claude/              Claude Code permissions (denies reading .env and key files)
-.vscode/              recommended extensions and editor settings
-docs/                 decision log; architecture, data model, threat model, privacy policy (planned)
-src/                  app code (main.tsx, App.tsx, styles.css), built to dist/app and served at /app/
-site/                 landing page (static HTML and CSS, one small script), copied to the root of dist/ and served at /
-src/storage/          on-device database (IndexedDB through Dexie) and first-run setup; tests in src/storage/testing/
-supabase/             edge functions; no migration files yet (the encrypted-records tables and their migrations come when sync is built)
-security-headers.ts   one source of truth for CSP etc. (preview server + dist/_headers): app and landing page sets
-e2e/                  Playwright tests (run against the production build)
-design/tokens.json    colours, fonts and fixed copy, mirrored from the design system
-design/assets/        mascot, container, status and other SVG icons, and the background leaves
-design/app-screens/   screens from the claude.ai design canvas (reference only; they don't open in a browser)
-design/landing-page/  landing page canvas downloads (reference only, never edited)
-design/prototype/     original single-file prototype, local only and gitignored, used as a porting reference
-scripts/setup.sh      one-time install
-scripts/build-site.mjs  after the app build: copies site/ into dist/ and writes dist/_headers
-scripts/serve-dist.mjs  `npm run preview`: serves all of dist/ on :4173 with the production headers
-ios/ android/         generated by Capacitor in the mobile phase; committed
-```
-
-Planned folders (added as each step lands): `src/domain` (step 2) including `src/domain/swaps` (greener-swap catalogue), `src/ui` (4), `src/crypto` and `src/sync` (5), `supabase/` functions including the AI proxy (6).
-
-## Roadmap
-
-Web (steps 1-9 web app, step 10 web barcode scanning):
-
-1. Scaffold
-2. Extract domain logic into tested modules
-3. Local storage (IndexedDB), export, import from the prototype
-4. Rebuild the UI
-5. Accounts and encrypted sync
-6. AI import proxy
-7. Offline and installability polish
-8. Account controls (export, delete)
-9. Harden and beta
-10. Web barcode scanning
-
-iOS and Android (steps 11-17):
-
-11. Add Capacitor and the native projects
-12. Native barcode scanning
-13. Notifications and native polish
-14. Secure key storage and app lock
-15. Icons, splash and signing
-16. Device testing and beta tracks
-17. Store listing and submission
+[AGPL-3.0](LICENSE).
