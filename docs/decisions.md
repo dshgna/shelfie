@@ -2,6 +2,10 @@
 
 Newest first. One line per decision, with the reason.
 
+## 22 Nov 2026
+
+- The favicon and app icons now use the Shelfie jar icon: master design/assets/mascot/shelfie-icon.svg, favicon copies in public/ and site/site-assets/. The PNG icons are regenerated from it by hand.
+
 ## 21 Nov 2026
 
 - **Section views on the landing page.** Each section's outer element has a `data-section` name (hero, sound-familiar, how-it-works, every-cupboard, greener-home, privacy, reviews, pricing, faq, closing; every-cupboard was added to the owner's list because the page has that section). `site/site-assets/section-views.js` sends Umami `section-view` with only that name, once per section per page view, when the section stays in the middle 20% of the window (IntersectionObserver, rootMargin -40% top and bottom) for 600 ms, so sections scrolled past by a nav link don't count. `reviews` is a hidden placeholder until there are real reviews and never counts. Plain JavaScript in `site/`, not `src/analytics/`, because the landing page has no build step. No heatmaps or recorder.
