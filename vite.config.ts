@@ -42,6 +42,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Only the app's own build files are precached. There is no runtimeCaching, so nothing
+        // from another origin (Supabase auth or data on *.supabase.co) is ever cached; keep it
+        // that way (e2e/auth.spec.ts checks the caches after signing in).
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: `${APP_BASE}index.html`,
         navigateFallbackAllowlist: [/^\/app\//],
@@ -49,7 +52,9 @@ export default defineConfig({
     }),
   ],
   test: {
+    // Unit tests run in Node. Component tests (*.test.tsx, src/ui only) opt into jsdom with a
+    // `// @vitest-environment jsdom` line at the top of the file.
     environment: 'node',
-    include: ['src/**/*.test.ts', 'supabase/functions/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/ui/**/*.test.tsx', 'supabase/functions/**/*.test.ts'],
   },
 })
