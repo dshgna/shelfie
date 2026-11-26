@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { FAKE_SUPABASE_ORIGIN, openSignedIn } from './fake-supabase'
 import { SITE_ANALYTICS_ORIGIN, SITE_ANALYTICS_SCRIPT } from '../security-headers'
 
-test('loads the shell and nothing leaves our origin', async ({ page, baseURL }) => {
+test('signs in, loads the shell, and nothing leaves our origin', async ({ page, baseURL }) => {
   const origin = new URL(baseURL ?? 'http://localhost:4173').origin
   const foreign: string[] = []
   const violations: string[] = []
@@ -9,13 +10,15 @@ test('loads the shell and nothing leaves our origin', async ({ page, baseURL }) 
   page.on('request', (req) => {
     const url = req.url()
     if (url.startsWith('data:') || url.startsWith('blob:')) return
-    if (new URL(url).origin !== origin) foreign.push(url)
+    // The fake Supabase project is answered in the browser (e2e/fake-supabase.ts), never reached.
+    const from = new URL(url).origin
+    if (from !== origin && from !== FAKE_SUPABASE_ORIGIN) foreign.push(url)
   })
   page.on('console', (msg) => {
     if (/content security policy/i.test(msg.text())) violations.push(msg.text())
   })
 
-  await page.goto('/app/')
+  await openSignedIn(page)
   await expect(page.getByRole('heading', { name: 'Shelfie', level: 1 })).toBeVisible()
   await page.waitForLoadState('networkidle')
 
@@ -69,7 +72,7 @@ test('the service worker only controls /app/', async ({ page, context, baseURL }
 })
 
 test('theme button cycles system, light, dark', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   const button = page.getByRole('button', { name: /Theme:/ })
   await expect(button).toHaveText('Theme: system')
   await button.click()

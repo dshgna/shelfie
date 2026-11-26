@@ -1,11 +1,12 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { FAKE_SUPABASE_ORIGIN, openSignedIn } from './fake-supabase'
 
 // Fill my shelves, with the mock reader's invented rows: Oat Shampoo (tops up the example item),
 // Rice Water Toner, Gentle Gel Wash (unsure shelf), Lemon Washing-Up Liquid and Lavender Bath
 // Salts (returned).
 
 async function openFill(page: Page): Promise<Locator> {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('button', { name: 'Fill my shelves' }).click()
   return page.getByRole('dialog', { name: 'Fill my shelves' })
 }
@@ -228,7 +229,9 @@ test('the whole flow stays on our origin, with 44px controls and no native pop-u
   page.on('request', (req) => {
     const url = req.url()
     if (url.startsWith('data:') || url.startsWith('blob:')) return
-    if (new URL(url).origin !== origin) foreign.push(url)
+    // The fake Supabase project is answered in the browser (e2e/fake-supabase.ts), never reached.
+    const from = new URL(url).origin
+    if (from !== origin && from !== FAKE_SUPABASE_ORIGIN) foreign.push(url)
   })
   page.on('dialog', async (d) => {
     nativeDialog = true

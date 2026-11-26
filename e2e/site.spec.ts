@@ -599,7 +599,8 @@ test.describe('sign-up without JavaScript', () => {
 test('the app loads under its own policy', async ({ page }) => {
   const response = await page.goto('/app/')
   expect(response?.headers()['content-security-policy']).toBe(appHeaders['Content-Security-Policy'])
-  await expect(page.getByRole('button', { name: /Theme:/ })).toBeVisible()
+  // Signed out, the app opens on Create account (an account is required).
+  await expect(page.getByRole('button', { name: 'Create account' })).toBeVisible()
   await page.waitForLoadState('networkidle')
 })
 

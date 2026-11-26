@@ -1,10 +1,13 @@
 import type { Locator, Page } from '@playwright/test'
 import { expect, test } from './guard'
+import { FAKE_SUPABASE_ORIGIN, openSignedIn } from './fake-supabase'
 
 // The main flows end to end, on the app's invented example items and the mock order reader's
 // invented rows. Every test here fails on a request to another origin or a CSP violation (guard.ts).
 
 test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
+// The fake Supabase project is answered in the browser (e2e/fake-supabase.ts), never reached.
+test.use({ allowedOrigins: [FAKE_SUPABASE_ORIGIN] })
 
 const row = (page: Page, name: string): Locator =>
   page.getByRole('listitem').filter({
@@ -17,7 +20,7 @@ const reviewRow = (dialog: Locator, name: string): Locator =>
     .filter({ has: dialog.page().getByRole('button', { name: `Edit details of ${name}` }) })
 
 async function openReview(page: Page): Promise<Locator> {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('button', { name: 'Fill my shelves' }).click()
   const dialog = page.getByRole('dialog', { name: 'Fill my shelves' })
   await dialog.getByRole('textbox', { name: 'Order text' }).fill('Invented order: 2 things')
@@ -27,7 +30,7 @@ async function openReview(page: Page): Promise<Locator> {
 }
 
 test('adds a new item through the item editor', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('button', { name: 'Fill my shelves' }).click()
   const fill = page.getByRole('dialog', { name: 'Fill my shelves' })
   await fill.getByText('Add each item', { exact: true }).click()
@@ -57,7 +60,7 @@ test('adds a new item through the item editor', async ({ page }) => {
 })
 
 test('plus and minus change the count and the stock bar', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   // Kitchen Sponges: 0 left, so its bar follows the count.
   const sponges = row(page, 'Kitchen Sponges')
   const count = sponges.locator('[aria-live]')
@@ -89,7 +92,7 @@ test('plus and minus change the count and the stock bar', async ({ page }) => {
 })
 
 test('builds the shopping list from low stock and copies it', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   const shopping = page.getByRole('tab', { name: /Shopping/ })
   await shopping.click()
   const panel = page.getByRole('tabpanel', { name: /Shopping/ })

@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test'
+import { openSignedIn } from './fake-supabase'
 
 // The item editor, on the app's invented example items.
 
 test('opens from a row, focuses Name, and Escape returns focus to the row', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   const open = page.getByRole('button', { name: 'Open Gel Cleanser to edit' })
   await open.click()
   const dialog = page.getByRole('dialog', { name: 'Edit Item' })
@@ -15,7 +16,7 @@ test('opens from a row, focuses Name, and Escape returns focus to the row', asyn
 })
 
 test('shows short messages next to the fields and focuses the first one', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('button', { name: 'Open Gel Cleanser to edit' }).click()
   const dialog = page.getByRole('dialog', { name: 'Edit Item' })
   await dialog.getByRole('textbox', { name: 'Name' }).fill('   ')
@@ -31,7 +32,7 @@ test('shows short messages next to the fields and focuses the first one', async 
 })
 
 test('saves changes to the item', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('button', { name: 'Open Gel Cleanser to edit' }).click()
   const dialog = page.getByRole('dialog', { name: 'Edit Item' })
   await dialog.getByRole('textbox', { name: 'Name' }).fill('Gentle Gel Cleanser')
@@ -50,7 +51,7 @@ test('asks before deleting, inside the page, and Keep it keeps the item', async 
     nativeDialog = true
     await d.dismiss()
   })
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('button', { name: 'Open Dish Soap to edit' }).click()
   const editor = page.getByRole('dialog', { name: 'Edit Item' })
   await editor.getByRole('button', { name: 'Delete' }).click()
@@ -70,7 +71,7 @@ test('asks before deleting, inside the page, and Keep it keeps the item', async 
 })
 
 test('changes the shelf and resets the group to that shelf’s first one', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('button', { name: 'Open Dish Soap to edit' }).click()
   const dialog = page.getByRole('dialog', { name: 'Edit Item' })
   await dialog.getByRole('button', { name: /Shelf/ }).click()

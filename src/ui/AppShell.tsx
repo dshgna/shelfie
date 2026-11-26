@@ -64,9 +64,11 @@ function sorted(values: Iterable<string>): string[] {
 interface AppShellProps {
   repository: ItemRepository
   householdId: string
+  /** Opens Account settings (from the header's account menu). */
+  onOpenAccount?: () => void
 }
 
-export function AppShell({ repository, householdId }: AppShellProps) {
+export function AppShell({ repository, householdId, onOpenAccount = () => {} }: AppShellProps) {
   const items = useItems(repository, householdId)
   const changeQuantity = useChangeQuantity(repository)
   const [page, setPage] = useState<Page>('inventory')
@@ -152,6 +154,7 @@ export function AppShell({ repository, householdId }: AppShellProps) {
         onQueryChange={setQuery}
         onShopNow={() => setPage('shopping')}
         onFill={() => setFillOpen(true)}
+        onOpenAccount={onOpenAccount}
       />
       <main className="flex flex-col gap-3.5 md:gap-5">
         <StatsHeader

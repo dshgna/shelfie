@@ -56,6 +56,7 @@ import {
   resetLife,
   type ReviewRow,
 } from './review'
+import { PlanLabel } from '../PlanLabel'
 
 type Step = 'orders' | 'review' | 'done'
 type Method = 'paste' | 'each'
@@ -188,15 +189,7 @@ function OrdersStep({
                   <span className="font-semibold">{option.name}</span>
                   <span className="text-sm text-muted">{option.detail}</span>
                 </span>
-                <span
-                  className={`flex-none rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                    option.now
-                      ? 'border-eu bg-eu-20 text-sprout-deep'
-                      : 'border-chip-line bg-chip-bg text-warn'
-                  }`}
-                >
-                  {option.now ? 'Now' : 'Planned'}
-                </span>
+                <PlanLabel now={option.now} />
               </>
             )}
           </Radio>

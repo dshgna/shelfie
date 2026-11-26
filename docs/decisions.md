@@ -2,6 +2,24 @@
 
 Newest first. One line per decision, with the reason.
 
+## Open questions
+
+- **Does the account password also unlock the encryption key?** Supabase Auth sends the password to the server, so deriving the encryption key from it would let the server derive the key. Decide in Productionising. Until then, nothing derives a key from the account password.
+- **Named device list needs its own table; decide with Productionising.** The Supabase client can't list a user's sessions, so Account settings shows only this device and "Sign out other devices".
+- **TODO: the analytics and privacy switches.** Account settings links to "Analytics and privacy", which is a placeholder with the heading only until the switches are built.
+
+## 26 Nov 2026
+
+- **Sign-in screens and Account settings follow `prototype-create-account-sign-in.html`.** `src/ui/auth/` (Create account, Sign in, Forgot password, Check your email, Reset password) and `src/ui/account/` (Account settings, the header's account menu, the privacy placeholder). Where the owner's brief named a label and the design differed, the brief's wording is used ("Keep me signed in on this device" on the web, "New to Shelfie?", "Resend email", "Export my data", the forgot-password confirmation "If that address has an account, we have sent a link."). The layout switches at 1024px: brand panel and tabbed card above, the phone layout below. Account settings opens from an account menu in the header at every width, because the phone's bottom bar and its More screen aren't built or designed yet.
+- **The reset link opens `/app/reset-password/`.** A folder (the build copies the app's `index.html` there), so any static host serves it without a rewrite rule. Saving the new password also signs out the other devices, as the design's note says.
+- **Component tests use jsdom.** `src/ui/**/*.test.tsx` files start with `// @vitest-environment jsdom` and use Testing Library with a fake `AuthService`; everything else stays in Node.
+- **E2E signs in through a fake Supabase.** Playwright builds the app with `VITE_SUPABASE_URL` set to `https://e2e-fake.supabase.co` (overriding any `.env.local`), and `e2e/fake-supabase.ts` answers every request to it in the browser, so no test reaches a real project. App specs sign in first with `openSignedIn`; the auth and account specs run axe on each screen.
+- **Layout and copy may be copied from `design/prototype/`.** Hard rule 9 now lets Claude Code copy screen layout, markup, spacing, copy and behaviour from the prototype files into the repo, so the sign-in and account screens can be built from `prototype-create-account-sign-in.html`. Unchanged: never edit or commit the folder, never copy personal data (use invented data), never import it, and tokens come only from `design/tokens.json`.
+- **An account is required: email and password through Supabase Auth, no guest mode.** No mobile number, magic link, recovery key or two-step sign-in for now (design brief "Sign in and account", revised 26 Nov 2026). `src/auth/` holds the client, the `AuthService` (with a Supabase version), error codes and password rules. Sign-in errors use Shelfie's own wording, and a wrong password and an unknown email give the same message so accounts can't be enumerated. Account deletion needs a server function and is a later step.
+- **"Keep me signed in" chooses the session storage.** On (the default), the Supabase session is kept in localStorage; off, in sessionStorage, so it ends when the app closes. The choice itself is a non-sensitive localStorage setting (`shelfie.keepSignedIn`).
+- **Sign out is for this device only.** `signOut()` uses Supabase's `local` scope, so other devices stay signed in; `signOutOthers()` uses `others`. Local data stays on the device after sign-out.
+- **One local database per account.** The local user id is the Supabase user id and the database is `shelfie-<userId>`, so another account signing in on the same device never sees the previous one's shelves. `ensureLocalProfile` runs only after sign-in; the household is still created on the device.
+
 ## 22 Nov 2026
 
 - The favicon and app icons now use the Shelfie jar icon: master design/assets/mascot/shelfie-icon.svg, favicon copies in public/ and site/site-assets/. The PNG icons are regenerated from it by hand.

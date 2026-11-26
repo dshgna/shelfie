@@ -50,6 +50,18 @@ export class ShelfieDB extends Dexie {
   }
 }
 
+/**
+ * The database name for one signed-in account: `shelfie-<userId>`, where userId is the Supabase
+ * user id. Each account has its own database, so a different person signing in on the same device
+ * never sees the previous person's shelves, and signing out leaves them on the device.
+ */
+export function userDbName(userId: string): string {
+  if (!/^[A-Za-z0-9-]+$/.test(userId)) {
+    throw new Error('A user id must be letters, digits and dashes only (a Supabase user id).')
+  }
+  return `shelfie-${userId}`
+}
+
 /** Opens the database. A factory rather than a module-level instance, so importing this module never touches IndexedDB. */
 export function openDb(name?: string): ShelfieDB {
   return new ShelfieDB(name)

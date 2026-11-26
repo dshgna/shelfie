@@ -1,11 +1,12 @@
 import { Input, Label, SearchField } from 'react-aria-components'
+import { AccountMenu } from './account/AccountMenu'
 import { MainActions } from './MainActions'
 import { ThemeButton } from './ThemeButton'
 
 /** The small jar beside the wordmark (the design canvas's logo mark, no ledge). */
-function LogoJar() {
+export function LogoJar({ className = 'size-[34px] md:size-[44px]' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 120 120" className="block size-[34px] md:size-[44px]" aria-hidden="true">
+    <svg viewBox="0 0 120 120" className={`block ${className}`} aria-hidden="true">
       <path
         className="fill-none stroke-sprout [stroke-width:6] [stroke-linecap:round]"
         d="M60 30 L60 16"
@@ -44,9 +45,10 @@ interface HeaderProps {
   onQueryChange: (query: string) => void
   onShopNow: () => void
   onFill: () => void
+  onOpenAccount: () => void
 }
 
-export function Header({ query, onQueryChange, onShopNow, onFill }: HeaderProps) {
+export function Header({ query, onQueryChange, onShopNow, onFill, onOpenAccount }: HeaderProps) {
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
       <div className="mr-auto flex items-center gap-2 md:gap-2.5">
@@ -55,8 +57,9 @@ export function Header({ query, onQueryChange, onShopNow, onFill }: HeaderProps)
           Shelfie
         </h1>
       </div>
-      <div className="md:order-last">
+      <div className="flex items-center gap-2 md:order-last">
         <ThemeButton />
+        <AccountMenu onOpenAccount={onOpenAccount} />
       </div>
       <SearchField
         value={query}

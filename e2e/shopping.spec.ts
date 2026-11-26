@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { FAKE_SUPABASE_ORIGIN, openSignedIn } from './fake-supabase'
 
 // The Shopping tab, on the app's invented example items. Their links use the reserved .example
 // domain; the tests never open them.
@@ -8,7 +9,7 @@ test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
 test('Shop now opens the Shopping tab, grouped by shop with the unlinked items last', async ({
   page,
 }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('button', { name: 'Shop now' }).click()
   const panel = page.getByRole('tabpanel', { name: /Shopping/ })
   await expect(panel.getByRole('heading', { level: 3 })).toHaveText([
@@ -19,7 +20,7 @@ test('Shop now opens the Shopping tab, grouped by shop with the unlinked items l
 })
 
 test('opens only https links, in a new tab, without opener or referrer', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('tab', { name: /Shopping/ }).click()
   const links = page.getByRole('tabpanel').getByRole('link')
   await expect(links).not.toHaveCount(0)
@@ -33,7 +34,7 @@ test('opens only https links, in a new tab, without opener or referrer', async (
 })
 
 test('Copy list copies the list on a tap and says so', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('tab', { name: /Shopping/ }).click()
   const panel = page.getByRole('tabpanel')
   await panel.getByRole('button', { name: 'Copy list' }).click()
@@ -44,7 +45,7 @@ test('Copy list copies the list on a tap and says so', async ({ page }) => {
 })
 
 test('ticks an item, changes how many, and adds it to stock', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('tab', { name: /Shopping/ }).click()
   const panel = page.getByRole('tabpanel')
   const add = panel.getByRole('button', { name: /checked to stock/ })
@@ -72,9 +73,11 @@ test('every control is at least 44px and nothing leaves our origin', async ({ pa
   page.on('request', (req) => {
     const url = req.url()
     if (url.startsWith('data:') || url.startsWith('blob:')) return
-    if (new URL(url).origin !== origin) foreign.push(url)
+    // The fake Supabase project is answered in the browser (e2e/fake-supabase.ts), never reached.
+    const from = new URL(url).origin
+    if (from !== origin && from !== FAKE_SUPABASE_ORIGIN) foreign.push(url)
   })
-  await page.goto('/app/')
+  await openSignedIn(page)
   await page.getByRole('tab', { name: /Shopping/ }).click()
   const panel = page.getByRole('tabpanel')
   await panel.getByRole('button', { name: 'Copy list' }).click()

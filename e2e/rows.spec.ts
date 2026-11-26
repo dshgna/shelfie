@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
+import { openSignedIn } from './fake-supabase'
 
 // The item rows on the Inventory tab, on the app's invented example items:
 // Gel Cleanser (2 tubes), Oat Shampoo (1 bottle, needs restocking),
@@ -27,7 +28,7 @@ async function iconLabel(page: Page, name: string): Promise<string> {
 }
 
 test('plus and minus are named after the item and change its count', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   const gel = row(page, 'Gel Cleanser')
   await expect(gel.locator('[aria-live]')).toHaveText('2 left')
 
@@ -42,7 +43,7 @@ test('plus and minus are named after the item and change its count', async ({ pa
 })
 
 test('minus stops at 0 and keeps focus', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   const sponges = row(page, 'Kitchen Sponges')
   const remove = page.getByRole('button', { name: 'Remove one Kitchen Sponges' })
   await expect(sponges.locator('[aria-live]')).toHaveText('0 left')
@@ -52,7 +53,7 @@ test('minus stops at 0 and keeps focus', async ({ page }) => {
 })
 
 test('the stock count reaches the stats and the Shopping tab', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   await expect(page.getByRole('button', { name: /3 to restock/ })).toBeVisible()
   // Oat Shampoo is low with 1 left; at 2 it is above its reorder point.
   await page.getByRole('button', { name: 'Add one Oat Shampoo' }).click()
@@ -63,7 +64,7 @@ test('the stock count reaches the stats and the Shopping tab', async ({ page }) 
 test('each row shows its container icon, the low one when it needs restocking', async ({
   page,
 }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   expect(await iconLabel(page, 'Gel Cleanser')).toBe('Tube, 70% left')
   expect(await iconLabel(page, 'Oat Shampoo')).toBe('Bottle, nearly empty')
   expect(await iconLabel(page, 'Kitchen Sponges')).toBe('Sponge, nearly empty')
@@ -78,7 +79,7 @@ test('each row shows its container icon, the low one when it needs restocking', 
 })
 
 test('the icon switches to the low one when stock runs low', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   // Toothpaste: 3 tubes, reorder at 1 left.
   expect(await iconLabel(page, 'Mint Toothpaste')).toBe('Tube, 70% left')
   await page.getByRole('button', { name: 'Remove one Mint Toothpaste' }).click()
@@ -88,7 +89,7 @@ test('the icon switches to the low one when stock runs low', async ({ page }) =>
 })
 
 test('the stock bar is a meter named after the item', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   const meter = page.getByRole('meter', { name: 'Kitchen Sponges stock' })
   await expect(meter).toHaveAttribute('aria-valuenow', '0')
   await expect(meter).toHaveAttribute('aria-valuetext', '0% left')
@@ -97,7 +98,7 @@ test('the stock bar is a meter named after the item', async ({ page }) => {
 })
 
 test('row controls are at least 44px', async ({ page }) => {
-  await page.goto('/app/')
+  await openSignedIn(page)
   const small = await page
     .getByRole('tabpanel')
     .locator('li button')
