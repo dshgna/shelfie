@@ -5,10 +5,14 @@ import App from './App'
 import { AuthProvider } from './auth/AuthProvider'
 import { getSupabaseClient, setKeepSignedIn } from './auth/client'
 import { createSupabaseAuthService } from './auth/service'
+import { ErrorBoundary } from './ui/ErrorBoundary'
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Missing #root element')
 
+// Creating the service doesn't create the Supabase client (that happens on the first auth call),
+// so a build without its settings still renders: AuthProvider moves to 'unavailable' and App shows
+// the plain "can't start" screen. The error boundary covers anything else thrown while rendering.
 const auth = createSupabaseAuthService({
   createClient: getSupabaseClient,
   setKeepSignedIn,
@@ -17,8 +21,10 @@ const auth = createSupabaseAuthService({
 
 createRoot(root).render(
   <StrictMode>
-    <AuthProvider service={auth}>
-      <App />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider service={auth}>
+        <App />
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

@@ -7,13 +7,17 @@
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
-import { extname, join, normalize, sep } from 'node:path'
+import { extname, join, normalize, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { rulesFor } from '../security-headers.ts'
 
-const PORT = 4173
+// PREVIEW_DIR and PREVIEW_PORT let the e2e tests serve a second build (one made without the
+// Supabase settings, e2e/unconfigured.spec.ts) beside the main one.
+const PORT = Number(process.env.PREVIEW_PORT ?? 4173)
 const HOST = 'localhost'
-const dist = fileURLToPath(new URL('../dist', import.meta.url))
+const dist = process.env.PREVIEW_DIR
+  ? resolve(process.env.PREVIEW_DIR)
+  : fileURLToPath(new URL('../dist', import.meta.url))
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',

@@ -5,6 +5,9 @@ import { FAKE_ANON_KEY, FAKE_SUPABASE_ORIGIN } from './e2e/fake-supabase'
 // whole dist/ folder, landing page at / and app at /app/, with the production security headers.
 // baseURL is the origin, so tests open the app with page.goto('/app/') (openSignedIn signs in
 // through the fake backend first).
+const UNCONFIGURED_DIR = 'dist-e2e-unconfigured'
+const UNCONFIGURED_URL = 'http://localhost:4174'
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -12,17 +15,42 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: { baseURL: 'http://localhost:4173', trace: 'on-first-retry' },
-  webServer: {
-    command: 'npm run build && npm run preview',
-    // The e2e build talks to a fake Supabase project that e2e/fake-supabase.ts answers in the
-    // browser; these override any .env.local values, so no test can reach a real project.
-    env: { VITE_SUPABASE_URL: FAKE_SUPABASE_ORIGIN, VITE_SUPABASE_ANON_KEY: FAKE_ANON_KEY },
-    url: 'http://localhost:4173/app/',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: 'npm run build && npm run preview',
+      // The e2e build talks to a fake Supabase project that e2e/fake-supabase.ts answers in the
+      // browser; these override any .env.local values, so no test can reach a real project.
+      env: { VITE_SUPABASE_URL: FAKE_SUPABASE_ORIGIN, VITE_SUPABASE_ANON_KEY: FAKE_ANON_KEY },
+      url: 'http://localhost:4173/app/',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+    {
+      // A second app build made without the Supabase settings (empty values override any
+      // .env.local), as a host without them would make it. Only e2e/unconfigured.spec.ts uses it.
+      command: `vite build --outDir ${UNCONFIGURED_DIR}/app --emptyOutDir && node scripts/serve-dist.mjs`,
+      env: {
+        VITE_SUPABASE_URL: '',
+        VITE_SUPABASE_ANON_KEY: '',
+        PREVIEW_DIR: UNCONFIGURED_DIR,
+        PREVIEW_PORT: '4174',
+      },
+      url: `${UNCONFIGURED_URL}/app/`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+  ],
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'phone', use: { ...devices['Pixel 7'] } },
+    {
+      name: 'desktop',
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: /unconfigured\.spec\.ts/,
+    },
+    { name: 'phone', use: { ...devices['Pixel 7'] }, testIgnore: /unconfigured\.spec\.ts/ },
+    {
+      name: 'unconfigured',
+      use: { ...devices['Desktop Chrome'], baseURL: UNCONFIGURED_URL },
+      testMatch: /unconfigured\.spec\.ts/,
+    },
   ],
 })

@@ -49,6 +49,20 @@ export class AuthFailure extends Error {
   }
 }
 
+/**
+ * A build without VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Names the variable, never a value.
+ * The app shows a plain "can't start" screen for it (status 'unavailable'), never a blank page.
+ */
+export class ConfigurationError extends Error {
+  readonly variable: string
+
+  constructor(variable: string) {
+    super(`${variable} is not set. Add it to .env.local, or to the host's build environment.`)
+    this.name = 'ConfigurationError'
+    this.variable = variable
+  }
+}
+
 /** Supabase Auth error codes (AuthError.code) that Shelfie tells apart. */
 const SUPABASE_CODES: Readonly<Record<string, AuthErrorCode>> = {
   invalid_credentials: 'invalidCredentials',

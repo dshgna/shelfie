@@ -1,8 +1,11 @@
 // The state behind AuthProvider: AuthProvider only reads this store (useSyncExternalStore) and
 // starts it in an effect, so these are its status transitions.
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createAuthStore } from '../auth-store'
+import { readSupabaseConfig } from '../client'
+import { ConfigurationError } from '../errors'
+import { createSupabaseAuthService } from '../service'
 import type { AuthService, AuthSession } from '../service'
 
 const ALEX: AuthSession = { user: { id: 'user-alex', email: 'alex@example.test' } }
@@ -31,6 +34,7 @@ function fakeService() {
     emit: (session: AuthSession | null) => listeners.forEach((l) => l(session)),
     answer: (session: AuthSession | null) => resolveSession(session),
     fail: () => rejectSession(new Error('invented')),
+    reject: (error: unknown) => rejectSession(error),
     listenerCount: () => listeners.size,
     subscribeCount: () => subscribeCount,
   }
@@ -131,5 +135,41 @@ describe('auth store', () => {
     fake.answer(SAM)
     await flush()
     expect(store.getState()).toEqual({ status: 'signedIn', user: SAM.user })
+  })
+})
+
+describe('auth store with a build that has no Supabase settings', () => {
+  function serviceWithoutConfig() {
+    return createSupabaseAuthService({
+      // What getSupabaseClient does when the variables are missing.
+      createClient: () => {
+        readSupabaseConfig({})
+        throw new Error('unreachable')
+      },
+      setKeepSignedIn: () => {},
+      appUrl: 'https://shelfie.example.test/app/',
+    })
+  }
+
+  it('starts without throwing and moves to unavailable, naming only the variable in the console', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const store = createAuthStore(serviceWithoutConfig())
+    expect(() => store.start()).not.toThrow()
+    expect(store.getState()).toEqual({ status: 'unavailable', user: null })
+    expect(errors).toHaveBeenCalledTimes(1)
+    expect(String(errors.mock.calls[0]?.[0])).toContain('VITE_SUPABASE_URL')
+    errors.mockRestore()
+  })
+
+  it('also moves to unavailable when getSession reports the missing configuration', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const fake = fakeService()
+    const store = createAuthStore(fake.service)
+    store.start()
+    fake.reject(new ConfigurationError('VITE_SUPABASE_ANON_KEY'))
+    await flush()
+    expect(store.getState().status).toBe('unavailable')
+    expect(String(errors.mock.calls[0]?.[0])).toContain('VITE_SUPABASE_ANON_KEY')
+    errors.mockRestore()
   })
 })

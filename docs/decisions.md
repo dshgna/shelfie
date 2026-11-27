@@ -8,6 +8,10 @@ Newest first. One line per decision, with the reason.
 - **Named device list needs its own table; decide with Productionising.** The Supabase client can't list a user's sessions, so Account settings shows only this device and "Sign out other devices".
 - **TODO: the analytics and privacy switches.** Account settings links to "Analytics and privacy", which is a placeholder with the heading only until the switches are built.
 
+## 27 Nov 2026
+
+- **A missing Supabase configuration shows a plain unavailable screen instead of a blank page.** The deployed app was blank because the build had no `VITE_SUPABASE_URL`, and the auth service created the Supabase client while `main.tsx` was starting, before React rendered. The client is now created on the first auth call; a missing variable puts the auth state in `unavailable` (App shows the wordmark, the jar and "Shelfie can't start right now. Please try again later.", and the console names the variable, never a value), and an error boundary around `<App />` shows the same screen for any render error. E2E builds a second copy without the variables (port 4174, `e2e/unconfigured.spec.ts`).
+
 ## 26 Nov 2026
 
 - **Sign-in screens and Account settings follow `prototype-create-account-sign-in.html`.** `src/ui/auth/` (Create account, Sign in, Forgot password, Check your email, Reset password) and `src/ui/account/` (Account settings, the header's account menu, the privacy placeholder). Where the owner's brief named a label and the design differed, the brief's wording is used ("Keep me signed in on this device" on the web, "New to Shelfie?", "Resend email", "Export my data", the forgot-password confirmation "If that address has an account, we have sent a link."). The layout switches at 1024px: brand panel and tabbed card above, the phone layout below. Account settings opens from an account menu in the header at every width, because the phone's bottom bar and its More screen aren't built or designed yet.

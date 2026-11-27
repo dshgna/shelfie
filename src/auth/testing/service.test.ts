@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AuthFailure } from '../errors'
+import { AuthFailure, ConfigurationError } from '../errors'
 import { createSupabaseAuthService, type AuthSession, type SupabaseAuthApi } from '../service'
 
 const APP_URL = 'https://shelfie.example.test/app/'
@@ -57,9 +57,26 @@ function setup(answers?: Parameters<typeof fakeAuth>[0]) {
 const rejection = (code: string) => expect.objectContaining({ name: 'AuthFailure', code })
 
 describe('SupabaseAuthService', () => {
-  it('creates the client once, through the factory', () => {
-    const { createdCount } = setup()
+  it('does not create the client when the service is created, only on the first call', async () => {
+    const { service, createdCount } = setup()
+    expect(createdCount()).toBe(0)
+    await service.getSession()
     expect(createdCount()).toBe(1)
+    await service.signOut()
+    expect(createdCount()).toBe(1)
+  })
+
+  it('creating the service never throws, even when the client cannot be made', async () => {
+    const service = createSupabaseAuthService({
+      createClient: () => {
+        throw new ConfigurationError('VITE_SUPABASE_URL')
+      },
+      setKeepSignedIn: () => {},
+      appUrl: APP_URL,
+    })
+    // The missing configuration comes out unchanged on use, so the app can tell it apart.
+    await expect(service.getSession()).rejects.toBeInstanceOf(ConfigurationError)
+    expect(() => service.onAuthStateChange(() => {})).toThrow(ConfigurationError)
   })
 
   it('signUp sends email and password, with the confirmation link back to the app', async () => {

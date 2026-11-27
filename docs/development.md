@@ -18,6 +18,10 @@ Versions are pinned in `package.json` and `package-lock.json`. Do not re-run `np
 
 The original prototype is not in the repo. Download the latest prototype HTML from the project owner and save it as `design/prototype/prototype-live-YYYY-MM-DD.html`, using the download date (for example `design/prototype/prototype-live-2026-11-15.html`). The folder is gitignored: do not add the file to git.
 
+## Deploying
+
+statichost.eu builds the site from `statichost.yml` (`npm ci && npm run build`). Vite reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` at build time and writes them into the app's bundle, so both must be set in statichost's build environment, with the production Supabase project's values (the project URL and its anon key; never a service-role key). Without them the app shows "Shelfie can't start right now" and the browser console names the missing variable. Never put either value in the repo; `.env.example` only lists the names. After changing them, deploy again: a running app keeps the values it was built with.
+
 ## Layout
 
 ```

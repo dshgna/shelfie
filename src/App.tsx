@@ -9,6 +9,7 @@ import { ACCOUNT_MENU_ID } from './ui/account/AccountMenu'
 import { AppShell } from './ui/AppShell'
 import { AuthScreens, type AuthView } from './ui/auth/AuthScreens'
 import { SEED_HOUSEHOLD_ID, seedItems } from './ui/seed'
+import { Unavailable } from './ui/Unavailable'
 
 const RESET_PATH = `${import.meta.env.BASE_URL}${RESET_PASSWORD_PATH}`
 
@@ -42,6 +43,7 @@ export default function App() {
   }, [status])
 
   if (status === 'loading') return <Loading />
+  if (status === 'unavailable') return <Unavailable />
 
   if (status === 'signedIn' && user) {
     if (resetting) {

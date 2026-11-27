@@ -1,5 +1,8 @@
 // The Supabase client for the app. It reads only VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-// (both public by design; CLAUDE.md privacy rule 4) and is created on first use, never at import.
+// (both public by design; CLAUDE.md privacy rule 4). Vite fills them in at build time. The client
+// is created on the first auth call (the service asks for it lazily), never at import or startup,
+// so a build without them throws a ConfigurationError there, which the app shows as its plain
+// "can't start" screen instead of a blank page.
 //
 // "Keep me signed in": Supabase keeps the session in the storage given here. When the choice is on
 // (the default) that is localStorage, so the session survives closing the app; when it is off it
@@ -7,6 +10,7 @@
 // non-sensitive setting in localStorage, so the next start knows where to look for the session.
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { ConfigurationError } from './errors'
 
 export interface SupabaseConfig {
   url: string
@@ -20,12 +24,8 @@ export function readSupabaseConfig(env: {
 }): SupabaseConfig {
   const url = env.VITE_SUPABASE_URL?.trim()
   const anonKey = env.VITE_SUPABASE_ANON_KEY?.trim()
-  if (!url) {
-    throw new Error('VITE_SUPABASE_URL is not set. Add it to .env.local (see .env.example).')
-  }
-  if (!anonKey) {
-    throw new Error('VITE_SUPABASE_ANON_KEY is not set. Add it to .env.local (see .env.example).')
-  }
+  if (!url) throw new ConfigurationError('VITE_SUPABASE_URL')
+  if (!anonKey) throw new ConfigurationError('VITE_SUPABASE_ANON_KEY')
   return { url, anonKey }
 }
 
@@ -87,7 +87,7 @@ export function setKeepSignedIn(keep: boolean): void {
   browserSessionSwitch().setKeepSignedIn(keep)
 }
 
-/** The app's one Supabase client. Throws if either variable is missing. */
+/** The app's one Supabase client, created on first call. Throws ConfigurationError if a variable is missing. */
 export function getSupabaseClient(): SupabaseClient {
   if (client) return client
   const { url, anonKey } = readSupabaseConfig({

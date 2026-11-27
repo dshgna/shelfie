@@ -9,7 +9,7 @@
 // - The account password is never used to derive an encryption key (docs/decisions.md, Open
 //   questions).
 
-import { AuthFailure, toAuthFailure } from './errors'
+import { AuthFailure, ConfigurationError, toAuthFailure } from './errors'
 import { validatePassword } from './password'
 
 export interface AuthUser {
@@ -89,7 +89,11 @@ export interface SupabaseAuthApi {
 }
 
 export interface SupabaseAuthServiceDeps {
-  /** Called once, on creation. The app passes getSupabaseClient; tests pass a fake. */
+  /**
+   * Called once, on the first auth call (never when the service is created), so a build without
+   * the Supabase variables can still start and show the "can't start" screen. The app passes
+   * getSupabaseClient; tests pass a fake.
+   */
   createClient: () => { auth: SupabaseAuthApi }
   /** Chooses where the next session is stored (client.ts). */
   setKeepSignedIn: (keep: boolean) => void
@@ -112,12 +116,16 @@ function requireValidPassword(password: string): void {
   if (!validatePassword(password).ok) throw new AuthFailure('weakPassword')
 }
 
-/** Runs a Supabase call, turning both returned and thrown errors into an AuthFailure. */
+/**
+ * Runs a Supabase call, turning both returned and thrown errors into an AuthFailure. A missing
+ * configuration passes through as it is, so the app can tell it apart.
+ */
 async function call<T extends { error: unknown }>(request: () => Promise<T>): Promise<T> {
   let result: T
   try {
     result = await request()
   } catch (error) {
+    if (error instanceof ConfigurationError) throw error
     throw toAuthFailure(error)
   }
   if (result.error) throw toAuthFailure(result.error)
@@ -125,7 +133,12 @@ async function call<T extends { error: unknown }>(request: () => Promise<T>): Pr
 }
 
 export function createSupabaseAuthService(deps: SupabaseAuthServiceDeps): AuthService {
-  const { auth } = deps.createClient()
+  let client: { auth: SupabaseAuthApi } | undefined
+  /** The client's auth API, created on first use. */
+  const api = (): SupabaseAuthApi => {
+    client ??= deps.createClient()
+    return client.auth
+  }
   const appUrl = deps.appUrl
   const resetUrl = new URL(RESET_PASSWORD_PATH, appUrl).href
 
@@ -133,60 +146,60 @@ export function createSupabaseAuthService(deps: SupabaseAuthServiceDeps): AuthSe
     async signUp(email, password) {
       requireValidPassword(password)
       const { data } = await call(() =>
-        auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: appUrl } }),
+        api().signUp({ email: email.trim(), password, options: { emailRedirectTo: appUrl } }),
       )
       return { needsConfirmation: data.session === null }
     },
 
     async resendConfirmation(email) {
       await call(() =>
-        auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: appUrl } }),
+        api().resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: appUrl } }),
       )
     },
 
     async signIn(email, password, keepSignedIn) {
       deps.setKeepSignedIn(keepSignedIn)
-      const { data } = await call(() => auth.signInWithPassword({ email: email.trim(), password }))
+      const { data } = await call(() => api().signInWithPassword({ email: email.trim(), password }))
       const session = toSession(data.session)
       if (!session) throw new AuthFailure('unknown')
       return session
     },
 
     async signOut() {
-      await call(() => auth.signOut({ scope: 'local' }))
+      await call(() => api().signOut({ scope: 'local' }))
     },
 
     async signOutOthers() {
-      await call(() => auth.signOut({ scope: 'others' }))
+      await call(() => api().signOut({ scope: 'others' }))
     },
 
     async requestPasswordReset(email) {
-      await call(() => auth.resetPasswordForEmail(email.trim(), { redirectTo: resetUrl }))
+      await call(() => api().resetPasswordForEmail(email.trim(), { redirectTo: resetUrl }))
     },
 
     async confirmPassword(password) {
-      const { data } = await call(() => auth.getSession())
+      const { data } = await call(() => api().getSession())
       const email = data.session?.user.email
       if (!email) throw new AuthFailure('signInAgain')
-      await call(() => auth.signInWithPassword({ email, password }))
+      await call(() => api().signInWithPassword({ email, password }))
     },
 
     async updatePassword(newPassword) {
       requireValidPassword(newPassword)
-      await call(() => auth.updateUser({ password: newPassword }))
+      await call(() => api().updateUser({ password: newPassword }))
     },
 
     async updateEmail(newEmail) {
-      await call(() => auth.updateUser({ email: newEmail.trim() }, { emailRedirectTo: appUrl }))
+      await call(() => api().updateUser({ email: newEmail.trim() }, { emailRedirectTo: appUrl }))
     },
 
     async getSession() {
-      const { data } = await call(() => auth.getSession())
+      const { data } = await call(() => api().getSession())
       return toSession(data.session)
     },
 
     onAuthStateChange(callback) {
-      const { data } = auth.onAuthStateChange((_event, session) => callback(toSession(session)))
+      const { data } = api().onAuthStateChange((_event, session) => callback(toSession(session)))
       return () => data.subscription.unsubscribe()
     },
 
