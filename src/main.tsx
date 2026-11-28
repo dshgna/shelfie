@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
 import App from './App'
+import { currentBuild, emailLinkBase } from './app-paths'
 import { AuthProvider } from './auth/AuthProvider'
 import { getSupabaseClient, setKeepSignedIn } from './auth/client'
 import { createSupabaseAuthService } from './auth/service'
@@ -16,7 +17,7 @@ if (!root) throw new Error('Missing #root element')
 const auth = createSupabaseAuthService({
   createClient: getSupabaseClient,
   setKeepSignedIn,
-  appUrl: new URL(import.meta.env.BASE_URL, window.location.origin).href,
+  appUrl: emailLinkBase(currentBuild(), window.location.origin),
 })
 
 createRoot(root).render(

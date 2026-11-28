@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RESET_PASSWORD_PATH } from './auth/service'
+import { appBasePath, currentBuild, isResetPasswordPath } from './app-paths'
 import { useAuth } from './auth/useAuth'
 import { startOfToday } from './domain/dates'
 import { openUserProfile } from './storage/firstRun'
@@ -11,12 +11,9 @@ import { AuthScreens, type AuthView } from './ui/auth/AuthScreens'
 import { SEED_HOUSEHOLD_ID, seedItems } from './ui/seed'
 import { Unavailable } from './ui/Unavailable'
 
-const RESET_PATH = `${import.meta.env.BASE_URL}${RESET_PASSWORD_PATH}`
-
 /** The reset email's link opens /app/reset-password/ (with or without the trailing slash). */
 function onResetPath(): boolean {
-  const path = window.location.pathname
-  return path === RESET_PATH || path === RESET_PATH.replace(/\/$/, '')
+  return isResetPasswordPath(window.location.pathname, currentBuild())
 }
 
 /** Supabase puts an error in the URL hash when a reset link has expired or was already used. */
@@ -26,7 +23,7 @@ function resetLinkFailed(): boolean {
 
 /** Leaves the reset address (and its hash) for the app's own address, without a reload. */
 function leaveResetPath() {
-  window.history.replaceState(null, '', import.meta.env.BASE_URL)
+  window.history.replaceState(null, '', appBasePath(currentBuild()))
 }
 
 /**

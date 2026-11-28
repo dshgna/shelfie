@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
-  GENERATED_PASSWORD_LENGTH,
+  GENERATED_PASSWORD_SHAPE,
   MIN_PASSWORD_LENGTH,
-  PASSWORD_CHARACTER_SETS,
   generatePassword,
   validatePassword,
   type RandomFill,
 } from '../password'
-
-const LOOK_ALIKES = ['0', 'O', 'o', '1', 'l', 'I', 'i', '|']
-const ALL = Object.values(PASSWORD_CHARACTER_SETS).join('')
+import { PASSWORD_WORDS } from '../password-words'
 
 /** A predictable "random" source: returns the given values in turn, then repeats them. */
 function sequence(values: number[]): RandomFill {
@@ -22,30 +19,50 @@ function sequence(values: number[]): RandomFill {
   }
 }
 
+describe('the word list', () => {
+  it('has enough plain, unique words', () => {
+    expect(PASSWORD_WORDS.length).toBeGreaterThanOrEqual(600)
+    expect(new Set(PASSWORD_WORDS).size).toBe(PASSWORD_WORDS.length)
+    for (const word of PASSWORD_WORDS) expect(word).toMatch(/^[a-z]{3,9}$/)
+  })
+})
+
 describe('generatePassword', () => {
-  const samples = Array.from({ length: 200 }, () => generatePassword())
+  const samples = Array.from({ length: 300 }, () => generatePassword())
 
-  it('is 16 characters long', () => {
-    expect(GENERATED_PASSWORD_LENGTH).toBe(16)
-    for (const password of samples) expect(password).toHaveLength(16)
+  it('looks like the design with capitals and a symbol: Cobalt-Maple-River-Tulip-42!', () => {
+    for (const password of samples) expect(password).toMatch(GENERATED_PASSWORD_SHAPE)
   })
 
-  it.each(Object.entries(PASSWORD_CHARACTER_SETS))('always includes a %s character', (_, set) => {
+  it('uses only words from the list, digits without 0 or 1, and a readable symbol', () => {
     for (const password of samples) {
-      expect(
-        [...password].some((c) => set.includes(c)),
-        password,
-      ).toBe(true)
+      const parts = password.split('-')
+      expect(parts).toHaveLength(5)
+      for (const word of parts.slice(0, 4)) {
+        expect(word.charAt(0)).toMatch(/[A-Z]/)
+        expect(PASSWORD_WORDS).toContain(word.toLowerCase())
+      }
+      expect(parts[4]).toMatch(/^[2-9]{2}[!#$%&*+=?@]$/)
     }
   })
 
-  it('uses only the readable set, never a look-alike', () => {
-    for (const set of Object.values(PASSWORD_CHARACTER_SETS)) {
-      for (const c of LOOK_ALIKES) expect(set).not.toContain(c)
-    }
+  it('always has a lowercase letter, a capital, a digit and a symbol', () => {
     for (const password of samples) {
-      for (const c of password) expect(ALL).toContain(c)
+      expect(password).toMatch(/[a-z]/)
+      expect(password).toMatch(/[A-Z]/)
+      expect(password).toMatch(/[0-9]/)
+      expect(password).toMatch(/[^A-Za-z0-9]/)
     }
+  })
+
+  it('picks the words and digits from the random source', () => {
+    const cap = (i: number) => {
+      const word = PASSWORD_WORDS[i] ?? ''
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    }
+    expect(generatePassword(sequence([0, 1, 2, 3, 0, 7, 9]))).toBe(
+      `${cap(0)}-${cap(1)}-${cap(2)}-${cap(3)}-29@`,
+    )
   })
 
   it('differs between calls', () => {
@@ -53,17 +70,8 @@ describe('generatePassword', () => {
     expect(new Set(samples).size).toBe(samples.length)
   })
 
-  it('still has every kind of character with a source that always gives the same value', () => {
-    const password = generatePassword(sequence([0]))
-    expect(password).toHaveLength(16)
-    for (const set of Object.values(PASSWORD_CHARACTER_SETS)) {
-      expect([...password].some((c) => set.includes(c))).toBe(true)
-    }
-  })
-
-  it('uses every character of the readable set', () => {
-    const seen = new Set(Array.from({ length: 1000 }, () => generatePassword()).join(''))
-    expect([...ALL].filter((c) => !seen.has(c))).toEqual([])
+  it('always passes the password rule', () => {
+    for (const password of samples) expect(validatePassword(password).ok).toBe(true)
   })
 })
 
@@ -79,9 +87,5 @@ describe('validatePassword', () => {
   it('counts characters as people see them', () => {
     expect(validatePassword('🌿🌿🌿🌿🌿🌿🌿🌿🌿')).toEqual({ ok: false, problem: 'tooShort' })
     expect(validatePassword('🌿🌿🌿🌿🌿🌿🌿🌿🌿🌿')).toEqual({ ok: true })
-  })
-
-  it('accepts every generated password', () => {
-    for (let i = 0; i < 50; i += 1) expect(validatePassword(generatePassword()).ok).toBe(true)
   })
 })

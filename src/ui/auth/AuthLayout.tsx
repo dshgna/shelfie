@@ -1,9 +1,9 @@
 // The frame of the sign-in screens, from prototype-create-account-sign-in.html.
 // - Wide (1024px and up): the brand panel on the left (wordmark, jar, headline, subhead, four
 //   benefits, privacy line; copy exactly as the design) and a card on the right.
-// - Narrow: the phone layout, one column. Create account opens with the wordmark, the jar and the
-//   headline (PhoneHero); the other screens have a bar with a back button and a title, and the jar
-//   saying one line (PhoneBar).
+// - Narrow: the phone layout, one column. Create account and Sign in share one entry page (the jar,
+//   the wordmark and two tabs: PhoneEntry); the other screens have a bar with a back button and a
+//   title, and the jar saying one line (PhoneBar).
 // The layout is chosen in JavaScript (useWide), so each width renders only its own headings and
 // controls and the keyboard order always follows what is on screen.
 
@@ -127,7 +127,16 @@ function BrandPanel() {
   )
 }
 
-export function AuthLayout({ wide, children }: { wide: boolean; children: ReactNode }) {
+export function AuthLayout({
+  wide,
+  leaves = 'default',
+  children,
+}: {
+  wide: boolean
+  /** 'both': leaves in both corners on the phone too (the phone entry page). */
+  leaves?: 'default' | 'both'
+  children: ReactNode
+}) {
   if (wide) {
     return (
       <div className="relative min-h-dvh">
@@ -143,37 +152,26 @@ export function AuthLayout({ wide, children }: { wide: boolean; children: ReactN
   }
   return (
     <div className="relative min-h-dvh">
-      <Leaves />
+      <Leaves corners={leaves} />
       <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4">{children}</main>
     </div>
   )
 }
 
-/** Phone create account: wordmark, the happy jar beside the headline, then the form's heading. */
-export function PhoneHero({
-  heading,
-  headingRef,
-  children,
-}: {
-  heading: string
-  headingRef?: RefObject<HTMLHeadingElement | null>
-  children: ReactNode
-}) {
+/**
+ * Phone Create account and Sign in (the iOS and Android design, also used on narrow web windows):
+ * the happy jar and the Shelfie wordmark centred, a visually hidden page heading, and the two tabs
+ * and their form. (The design's footer line was dropped by the owner, 28 Nov 2026.)
+ */
+export function PhoneEntry({ heading, children }: { heading: string; children: ReactNode }) {
   return (
-    <div className="flex flex-1 flex-col gap-4 px-6 py-7">
-      <Wordmark size="phone" />
-      <div className="flex items-end gap-3.5">
-        <Mascot mood="happy" gauge={80} onLedge className="w-[92px] flex-none" />
-        <h1 className="m-0 mb-2 font-display text-2xl leading-[1.15] font-semibold">{HEADLINE}</h1>
-      </div>
-      <h2
-        ref={headingRef}
-        tabIndex={-1}
-        className="m-0 mt-1.5 font-display text-xl leading-tight font-semibold outline-none"
-      >
-        {heading}
-      </h2>
-      {children}
+    <div className="flex flex-1 flex-col items-center gap-3.5 px-6 pt-24 pb-[30px]">
+      <Mascot mood="happy" gauge={80} onLedge className="w-[124px]" />
+      <p className="m-0 mt-1.5 font-display text-5xl leading-none font-semibold tracking-tight text-ink">
+        Shelfie
+      </p>
+      <h1 className="sr-only">{heading}</h1>
+      <div className="mt-1.5 w-full max-w-[342px]">{children}</div>
     </div>
   )
 }

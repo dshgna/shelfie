@@ -85,7 +85,7 @@ for (const width of [390, 1280]) {
         await page.getByRole('button', { name: 'Sign out', exact: true }).click()
       }
       await expect(
-        page.getByRole('heading', { name: wide ? 'Welcome Back' : 'Sign in' }),
+        page.getByRole('heading', { name: wide ? 'Welcome Back' : 'Sign in to Shelfie' }),
       ).toBeVisible()
       expect(calls.some((c) => c.path === '/auth/v1/logout' && c.search === '?scope=local')).toBe(
         true,

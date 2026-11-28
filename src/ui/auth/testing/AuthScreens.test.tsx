@@ -12,24 +12,29 @@ import { keepSignedInLabel } from '../SignIn'
 import { fakeAuthService, renderWithAuth, setWide } from './helpers'
 
 const EMAIL = 'person@example.test'
-const GENERATED = 'Invented-Pass#2345'
+const GENERATED = 'Cobalt-Maple-River-Tulip-42!'
 
 beforeEach(() => setWide(false))
 
 const field = (name: string) => screen.getByLabelText(name, { selector: 'input' })
 
 describe('Create account (phone)', () => {
-  it('shows the design: headline, heading, both pills, the terms and Sign in', () => {
+  it('shows the phone design: jar, wordmark, the two tabs, three pills and the terms', () => {
     renderWithAuth(<AuthScreens />)
     expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: 'Stop keeping the bathroom cabinet in your head.',
-      }),
+      screen.getByRole('heading', { level: 1, name: 'Create your Shelfie account' }),
     ).toBeTruthy()
-    expect(screen.getByRole('heading', { level: 2, name: 'Create your account' })).toBeTruthy()
+    expect(screen.getByText('Shelfie')).toBeTruthy()
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'Create account',
+      'Sign in',
+    ])
+    expect(screen.getByRole('tab', { name: 'Create account' }).getAttribute('aria-selected')).toBe(
+      'true',
+    )
     expect(screen.getByRole('button', { name: 'Generate password' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeTruthy()
     const terms = screen.getByRole('link', { name: /Terms/ })
     expect(terms.getAttribute('href')).toBe('/terms')
     expect(terms.getAttribute('target')).toBe('_blank')
@@ -37,8 +42,40 @@ describe('Create account (phone)', () => {
     expect(screen.getByRole('link', { name: /Privacy notice/ }).getAttribute('href')).toBe(
       '/privacy',
     )
-    expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy()
+    expect(screen.queryByText(/Already have an account/)).toBeNull()
+    // The design's footer line was dropped (owner, 28 Nov 2026).
+    expect(screen.queryByText(/Made for the bathroom cupboard/)).toBeNull()
     expect(document.body.textContent).not.toMatch(/claude/i)
+  })
+
+  it('draws leaves in both corners on the phone entry page, and only top right elsewhere', async () => {
+    const bottomLeft = () => document.querySelector('svg[viewBox="-40 690 250 230"]')
+    const { user } = renderWithAuth(<AuthScreens />)
+    expect(bottomLeft()?.getAttribute('class')).not.toMatch(/(^|\s)hidden(\s|$)/)
+    await user.click(screen.getByRole('tab', { name: 'Sign in' }))
+    expect(bottomLeft()?.getAttribute('class')).not.toMatch(/(^|\s)hidden(\s|$)/)
+    await user.click(screen.getByRole('button', { name: 'Forgot password?' }))
+    expect(bottomLeft()?.getAttribute('class')).toMatch(/(^|\s)hidden(\s|$)/)
+  })
+
+  it('Clear empties the password, then is off, and focus goes back to the field', async () => {
+    const { user } = renderWithAuth(<AuthScreens generate={() => GENERATED} />)
+    const clear = screen.getByRole('button', { name: 'Clear' })
+    expect(clear.hasAttribute('disabled')).toBe(true)
+    await user.click(screen.getByRole('button', { name: 'Generate password' }))
+    expect(clear.hasAttribute('disabled')).toBe(false)
+    await user.click(clear)
+    const password = field('Password') as HTMLInputElement
+    expect(password.value).toBe('')
+    expect(clear.hasAttribute('disabled')).toBe(true)
+    expect(document.activeElement).toBe(password)
+  })
+
+  it('the Sign in tab switches to the sign-in form', async () => {
+    const { user } = renderWithAuth(<AuthScreens />)
+    await user.click(screen.getByRole('tab', { name: 'Sign in' }))
+    expect(screen.getByRole('heading', { level: 1, name: 'Sign in to Shelfie' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy()
   })
 
   it('uses the autocomplete hints password managers need', () => {
@@ -181,17 +218,19 @@ describe('Sign in', () => {
     return { ...fake, ...rendered }
   }
 
-  it('shows the design: Forgot password?, the checkbox and Create an account', async () => {
+  it('shows the phone design: Forgot password?, the checkbox, no Create an account line', async () => {
     await openSignIn()
-    expect(screen.getByRole('heading', { level: 1, name: 'Sign in' })).toBeTruthy()
-    expect(screen.getByText('Welcome back! Your shelves are waiting.')).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'Sign in to Shelfie' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Sign in' }).getAttribute('aria-selected')).toBe('true')
     expect(screen.getByRole('button', { name: 'Forgot password?' })).toBeTruthy()
     expect(
       (screen.getByRole('checkbox', { name: keepSignedInLabel(false) }) as HTMLInputElement)
         .checked,
     ).toBe(true)
-    expect(screen.getByRole('button', { name: 'Create an account' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Create an account' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
     expect(field('Password').getAttribute('autocomplete')).toBe('current-password')
+    expect(screen.queryByText(/Made for the bathroom cupboard/)).toBeNull()
   })
 
   it('labels the checkbox for the device it runs on', () => {
@@ -293,7 +332,7 @@ describe('Check your email', () => {
   it('Use a different email goes back to an empty form', async () => {
     const { user } = renderWithAuth(<AuthScreens initialView="checkSignup" />)
     await user.click(screen.getByRole('button', { name: 'Use a different email' }))
-    expect(screen.getByRole('heading', { name: 'Create your account' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Create your Shelfie account' })).toBeTruthy()
     expect((field('Email') as HTMLInputElement).value).toBe('')
   })
 })
@@ -338,6 +377,8 @@ describe('web layout', () => {
     expect(screen.getByRole('heading', { name: 'Create Your Account' })).toBeTruthy()
     const tabs = screen.getAllByRole('tab').map((t) => t.textContent)
     expect(tabs).toEqual(['Create account', 'Sign in'])
+
+    expect(screen.queryByRole('button', { name: 'Clear' })).toBeNull()
 
     await user.click(screen.getByRole('tab', { name: 'Sign in' }))
     expect(screen.getByRole('heading', { name: 'Welcome Back' })).toBeTruthy()

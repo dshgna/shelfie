@@ -10,7 +10,7 @@ import { ALEX, fakeAuthService, renderWithAuth, setWide } from '../../auth/testi
 
 const SAFARI_IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1'
-const GENERATED = 'Invented-Pass#2345'
+const GENERATED = 'Cobalt-Maple-River-Tulip-42!'
 
 beforeEach(() => setWide(false))
 

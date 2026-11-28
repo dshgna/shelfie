@@ -1,11 +1,13 @@
 // Create account: email, a new password (eye button, Generate password, Copy) and "Create account".
-// Phone: the first screen when signed out (PhoneHero). Web: the "Create account" tab of the card.
+// The "Create account" tab: on the phone entry page (PhoneEntry, with Clear beside Generate
+// password and Copy) and on the web card.
 
 import { useRef, useState, type FormEvent } from 'react'
 import { Button, Form } from 'react-aria-components'
+import { currentBuild, siteLink } from '../../app-paths'
 import { generatePassword } from '../../auth/password'
 import { useAuth } from '../../auth/useAuth'
-import { CardTitle, FormProblem, LockIcon, PhoneHero, useFocusOnMount } from './AuthLayout'
+import { CardTitle, FormProblem, LockIcon, useFocusOnMount } from './AuthLayout'
 import { EmailField } from './fields'
 import { PasswordField } from './PasswordField'
 import { PasswordTools } from './PasswordTools'
@@ -18,14 +20,13 @@ export interface CreateAccountProps {
   autoFocus: boolean
   email: string
   onEmailChange: (email: string) => void
-  onSignIn: () => void
   /** Supabase sent a confirmation email: show Check your email. */
   onCheckEmail: () => void
   writeClipboard?: (text: string) => Promise<void>
   generate?: () => string
 }
 
-/** Opens on the landing page site (same origin), in a new tab. */
+/** Opens on the landing page site (same origin on the web, the public site in the native app), in a new tab. */
 function NewTabLink({ href, children }: { href: string; children: string }) {
   return (
     <a href={href} target="_blank" rel="noopener" className={INLINE_LINK}>
@@ -40,7 +41,6 @@ export function CreateAccount({
   autoFocus,
   email,
   onEmailChange,
-  onSignIn,
   onCheckEmail,
   writeClipboard,
   generate = generatePassword,
@@ -54,6 +54,7 @@ export function CreateAccount({
   }>({})
   const submit = useAuthSubmit()
   const emailRef = useRef<HTMLInputElement>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
   useFocusOnMount(emailRef, autoFocus)
 
   const onSubmit = (event: FormEvent) => {
@@ -102,6 +103,7 @@ export function CreateAccount({
           revealed={revealed}
           onRevealedChange={setRevealed}
           error={errors.password}
+          inputRef={passwordRef}
         />
         <PasswordTools
           value={password}
@@ -112,6 +114,16 @@ export function CreateAccount({
             setRevealed(true)
             setErrors((e) => ({ ...e, password: undefined }))
           }}
+          onClear={
+            wide
+              ? undefined
+              : () => {
+                  setPassword('')
+                  setErrors((e) => ({ ...e, password: undefined }))
+                  // The Clear button turns off, so focus goes back to the field.
+                  passwordRef.current?.focus()
+                }
+          }
         />
       </div>
       {wide && (
@@ -126,8 +138,9 @@ export function CreateAccount({
         Create account
       </Button>
       <p className="m-0 text-center text-[13px] text-muted">
-        By creating an account you agree to the <NewTabLink href="/terms">Terms</NewTabLink> and{' '}
-        <NewTabLink href="/privacy">Privacy notice</NewTabLink>.
+        By creating an account you agree to the{' '}
+        <NewTabLink href={siteLink('/terms', currentBuild())}>Terms</NewTabLink> and{' '}
+        <NewTabLink href={siteLink('/privacy', currentBuild())}>Privacy notice</NewTabLink>.
       </p>
     </Form>
   )
@@ -140,15 +153,5 @@ export function CreateAccount({
       </div>
     )
   }
-  return (
-    <PhoneHero heading="Create your account">
-      {form}
-      <p className="m-0 mt-auto text-center text-[15px] text-muted">
-        Already have an account?{' '}
-        <Button onPress={onSignIn} className={`${INLINE_LINK} min-h-[44px]`}>
-          Sign in
-        </Button>
-      </p>
-    </PhoneHero>
-  )
+  return form
 }

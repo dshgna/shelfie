@@ -5,7 +5,7 @@
 
 import { useState } from 'react'
 import { Tab, TabList, TabPanel, Tabs, type Key } from 'react-aria-components'
-import { AuthLayout, useWide } from './AuthLayout'
+import { AuthLayout, PhoneEntry, useWide } from './AuthLayout'
 import { CheckEmail } from './CheckEmail'
 import { CreateAccount } from './CreateAccount'
 import { ForgotPassword } from './ForgotPassword'
@@ -56,7 +56,6 @@ export function AuthScreens({
       autoFocus={focus}
       email={email}
       onEmailChange={setEmail}
-      onSignIn={() => go('signIn')}
       onCheckEmail={() => go('checkSignup')}
       writeClipboard={writeClipboard}
       generate={generate}
@@ -74,8 +73,9 @@ export function AuthScreens({
   )
 
   let content
-  if ((view === 'create' || view === 'signIn') && wide) {
-    content = (
+  if (view === 'create' || view === 'signIn') {
+    // Create account and Sign in are two tabs, on the web card and on the phone entry page.
+    const tabs = (
       <Tabs
         selectedKey={view}
         onSelectionChange={(key: Key) => setScreen({ view: key as AuthView, focus: false })}
@@ -103,10 +103,15 @@ export function AuthScreens({
         <TabPanel id="signIn">{signIn}</TabPanel>
       </Tabs>
     )
-  } else if (view === 'create') {
-    content = create
-  } else if (view === 'signIn') {
-    content = signIn
+    content = wide ? (
+      tabs
+    ) : (
+      <PhoneEntry
+        heading={view === 'create' ? 'Create your Shelfie account' : 'Sign in to Shelfie'}
+      >
+        {tabs}
+      </PhoneEntry>
+    )
   } else if (view === 'forgot') {
     content = (
       <ForgotPassword
@@ -148,5 +153,11 @@ export function AuthScreens({
     )
   }
 
-  return <AuthLayout wide={wide}>{content}</AuthLayout>
+  // The phone entry page (Create account and Sign in) has leaves in both corners.
+  const entry = view === 'create' || view === 'signIn'
+  return (
+    <AuthLayout wide={wide} leaves={entry ? 'both' : 'default'}>
+      {content}
+    </AuthLayout>
+  )
 }

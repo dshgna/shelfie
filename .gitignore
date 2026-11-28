@@ -46,6 +46,8 @@ supabase/signing_keys.json
 *.pem
 *.p8
 *.key
+*.cer
+*.certSigningRequest
 
 # Tool caches and editor junk
 .eslintcache

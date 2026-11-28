@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">homeshelfie</string>
+    <string name="title_activity_main">homeshelfie</string>
+    <string name="package_name">com.homeshelfie.shelfie</string>
+    <string name="custom_url_scheme">com.homeshelfie.shelfie</string>
+</resources>

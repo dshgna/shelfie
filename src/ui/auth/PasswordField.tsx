@@ -16,6 +16,8 @@ export interface PasswordFieldProps {
   onRevealedChange: (revealed: boolean) => void
   error?: string | undefined
   inputRef?: RefObject<HTMLInputElement | null>
+  /** Monospace text (the default), so a generated password reads clearly. */
+  mono?: boolean
 }
 
 function EyeIcon({ open }: { open: boolean }) {
@@ -44,6 +46,7 @@ export function PasswordField({
   onRevealedChange,
   error,
   inputRef,
+  mono = true,
 }: PasswordFieldProps) {
   return (
     <TextField
@@ -63,7 +66,7 @@ export function PasswordField({
           spellCheck={false}
           autoCapitalize="none"
           autoCorrect="off"
-          className={`${AUTH_INPUT} pr-[52px] font-mono font-medium`}
+          className={`${AUTH_INPUT} pr-[52px] ${mono ? 'font-mono font-medium' : ''}`}
         />
         <ToggleButton
           isSelected={revealed}

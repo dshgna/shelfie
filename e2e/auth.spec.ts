@@ -40,7 +40,9 @@ for (const width of [390, 1280]) {
       await expect(page).toHaveURL(/\/app\//)
       await page.goto('/app/')
       await expect(
-        page.getByRole('heading', { name: wide ? 'Create Your Account' : 'Create your account' }),
+        page.getByRole('heading', {
+          name: wide ? 'Create Your Account' : 'Create your Shelfie account',
+        }),
       ).toBeVisible()
       if (wide) {
         await expect(page.getByRole('tab', { name: 'Create account' })).toHaveAttribute(
@@ -60,7 +62,8 @@ for (const width of [390, 1280]) {
       const password = page.getByLabel('Password', { exact: true })
       await expect(password).toHaveAttribute('type', 'text')
       const generated = await password.inputValue()
-      expect(generated).toHaveLength(16)
+      // The design's format with capitals and a symbol, e.g. Cobalt-Maple-River-Tulip-42!
+      expect(generated).toMatch(/^[A-Z][a-z]+(-[A-Z][a-z]+){3}-[2-9]{2}[!#$%&*+=?@]$/)
       await page.getByRole('button', { name: 'Copy' }).click()
       await expect(page.getByRole('status').filter({ hasText: 'Copied' })).toBeVisible()
       expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(generated)
@@ -94,10 +97,9 @@ for (const width of [390, 1280]) {
     }) => {
       await fakeSupabase(page.context())
       await page.goto('/app/')
-      if (wide) await page.getByRole('tab', { name: 'Sign in' }).click()
-      else await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+      await page.getByRole('tab', { name: 'Sign in' }).click()
       await expect(
-        page.getByRole('heading', { name: wide ? 'Welcome Back' : 'Sign in' }),
+        page.getByRole('heading', { name: wide ? 'Welcome Back' : 'Sign in to Shelfie' }),
       ).toBeVisible()
       await expectNoAxeViolations(page)
 
@@ -123,8 +125,7 @@ for (const width of [390, 1280]) {
     test('forgot password gives the same confirmation for any address', async ({ page }) => {
       const calls = await fakeSupabase(page.context())
       await page.goto('/app/')
-      if (wide) await page.getByRole('tab', { name: 'Sign in' }).click()
-      else await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+      await page.getByRole('tab', { name: 'Sign in' }).click()
       await page.getByRole('button', { name: 'Forgot password?' }).click()
       await expect(
         page.getByRole('heading', { name: wide ? 'Forgot Your Password?' : 'Forgot password' }),

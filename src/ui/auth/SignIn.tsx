@@ -1,10 +1,11 @@
 // Sign in: email, password (eye button), "Forgot password?", "Keep me signed in" and "Sign in".
+// The "Sign in" tab: on the phone entry page (PhoneEntry) and on the web card.
 // A wrong password and an unknown email always show the same message (errors.ts).
 
 import { useRef, useState, type FormEvent } from 'react'
 import { Button, Form } from 'react-aria-components'
 import { useAuth } from '../../auth/useAuth'
-import { CardTitle, FormProblem, PhoneBar, useFocusOnMount } from './AuthLayout'
+import { CardTitle, FormProblem, useFocusOnMount } from './AuthLayout'
 import { EmailField, KeepSignedIn } from './fields'
 import { PasswordField } from './PasswordField'
 import { INLINE_LINK, PRIMARY, TEXT_LINK } from './styles'
@@ -97,6 +98,7 @@ export function SignIn({
         revealed={revealed}
         onRevealedChange={setRevealed}
         error={errors.password}
+        mono={wide}
       />
       {wide ? (
         <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -105,19 +107,21 @@ export function SignIn({
         </div>
       ) : (
         <>
-          <div className="-mt-2">{forgot}</div>
-          <div className="px-2.5">{keepBox}</div>
+          <div className="-mt-2.5 flex justify-end">{forgot}</div>
+          {keepBox}
         </>
       )}
       <Button type="submit" isDisabled={submit.pending} className={PRIMARY}>
         Sign in
       </Button>
-      <p className="m-0 text-center text-sm text-muted">
-        New to Shelfie?{' '}
-        <Button onPress={onCreateAccount} className={`${INLINE_LINK} min-h-[44px]`}>
-          Create an account
-        </Button>
-      </p>
+      {wide && (
+        <p className="m-0 text-center text-sm text-muted">
+          New to Shelfie?{' '}
+          <Button onPress={onCreateAccount} className={`${INLINE_LINK} min-h-[44px]`}>
+            Create an account
+          </Button>
+        </p>
+      )}
     </Form>
   )
 
@@ -129,14 +133,5 @@ export function SignIn({
       </div>
     )
   }
-  return (
-    <PhoneBar
-      title="Sign in"
-      backLabel="Back to create account"
-      onBack={onCreateAccount}
-      bubble="Welcome back! Your shelves are waiting."
-    >
-      {form}
-    </PhoneBar>
-  )
+  return form
 }

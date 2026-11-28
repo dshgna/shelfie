@@ -2,25 +2,22 @@
 // password must meet. Pure functions: randomness comes in as a parameter (crypto.getRandomValues by
 // default), so tests can check them. The account password never derives an encryption key (see
 // docs/decisions.md, Open questions).
+//
+// A generated password follows the design's example (`cobalt-maple-river-tulip-42`) with capitals
+// and a symbol added, so it also meets a "capitals, digits and symbols" rule:
+// `Cobalt-Maple-River-Tulip-42!`. Four capitalised words and two digits joined by hyphens, then
+// one symbol. Easy to read aloud and type on a phone; the digits avoid 0 and 1, which look like O
+// and l, and the symbols avoid quotes, backticks, `|` and anything easily misread.
 
-/** Letters and digits that can't be mistaken for each other: no 0/O/o, no 1/l/I/i. */
-const LOWERCASE = 'abcdefghjkmnpqrstuvwxyz'
-const UPPERCASE = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
-const DIGITS = '23456789'
-/** Symbols that are easy to read and type: no quotes, backticks, `|`, `,` or `.`. */
-const SYMBOLS = '!#$%&*+-=?@^_~'
+import { PASSWORD_WORDS } from './password-words'
 
-export const PASSWORD_CHARACTER_SETS = {
-  lowercase: LOWERCASE,
-  uppercase: UPPERCASE,
-  digit: DIGITS,
-  symbol: SYMBOLS,
-} as const
-
-const ALL_CHARACTERS = LOWERCASE + UPPERCASE + DIGITS + SYMBOLS
-
-export const GENERATED_PASSWORD_LENGTH = 16
+export const GENERATED_WORD_COUNT = 4
+export const GENERATED_DIGITS = '23456789'
+export const GENERATED_SYMBOLS = '!#$%&*+=?@'
 export const MIN_PASSWORD_LENGTH = 10
+
+/** The shape of a generated password: four capitalised words and two digits joined by hyphens, then a symbol. */
+export const GENERATED_PASSWORD_SHAPE = /^[A-Z][a-z]+(-[A-Z][a-z]+){3}-[2-9]{2}[!#$%&*+=?@]$/
 
 /** Fills the array with random values, like crypto.getRandomValues. */
 export type RandomFill = (array: Uint32Array<ArrayBuffer>) => void
@@ -40,27 +37,17 @@ function randomBelow(n: number, fill: RandomFill): number {
   }
 }
 
-function pick(characters: string, fill: RandomFill): string {
-  return characters.charAt(randomBelow(characters.length, fill))
-}
+const capitalise = (word: string) => word.charAt(0).toUpperCase() + word.slice(1)
 
-/**
- * A 16-character password from the readable set, with at least one lowercase letter, uppercase
- * letter, digit and symbol, in a random order.
- */
+/** Four random words, two random digits and a random symbol, e.g. `Cobalt-Maple-River-Tulip-42!`. */
 export function generatePassword(fill: RandomFill = cryptoFill): string {
-  const characters = Object.values(PASSWORD_CHARACTER_SETS).map((set) => pick(set, fill))
-  while (characters.length < GENERATED_PASSWORD_LENGTH) {
-    characters.push(pick(ALL_CHARACTERS, fill))
+  const pick = (characters: string) => characters.charAt(randomBelow(characters.length, fill))
+  const parts: string[] = []
+  for (let i = 0; i < GENERATED_WORD_COUNT; i += 1) {
+    parts.push(capitalise(PASSWORD_WORDS[randomBelow(PASSWORD_WORDS.length, fill)] ?? ''))
   }
-  // Fisher-Yates shuffle, so the guaranteed characters aren't always at the start.
-  for (let i = characters.length - 1; i > 0; i -= 1) {
-    const j = randomBelow(i + 1, fill)
-    const a = characters[i] ?? ''
-    characters[i] = characters[j] ?? ''
-    characters[j] = a
-  }
-  return characters.join('')
+  parts.push(pick(GENERATED_DIGITS) + pick(GENERATED_DIGITS))
+  return parts.join('-') + pick(GENERATED_SYMBOLS)
 }
 
 export type PasswordCheck = { ok: true } | { ok: false; problem: 'tooShort' }
